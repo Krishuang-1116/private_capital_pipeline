@@ -4,6 +4,15 @@ dbt_packages/
 logs/
 dbt_internal_packages/
 *.duckdb
+<<<<<<< HEAD
 data/raw/
+=======
+
+# generated raw source data — reproducible via generator/, not committed
+data/raw/
+*.manifest.json
+
+# local working docs / OS cruft
+>>>>>>> fbc0452 (Update .gitignore)
 CLAUDE.md
 .DS_Store
