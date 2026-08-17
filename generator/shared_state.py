@@ -269,3 +269,49 @@ SCD_CLIENT_IDS: list[str] = [
     "C002", "C008", "C011", "C015",
     "C019", "C023", "C031", "C037",
 ]
+
+# ── Unresolvable strategy (Defect 3b, spec §2.4) ──────────────────────────────
+# Pre-cutover deals with real_estate = Yes or infrastructure = Yes but no
+# financing type anchor (private_equity = No AND private_debt = No). Backfill
+# logic in the intermediate layer cannot resolve these — they surface via
+# qa_unresolvable_strategy. generate_pns_raw.py reserves one pre-cutover-cohort
+# deal per entry (deal index < 80, i.e. entered before the Jan 2026 cutover)
+# and forces this condition across all of that deal's pre-cutover rows.
+
+UNRESOLVABLE_STRATEGY_DEALS: list[dict] = [
+    {"unresolvable_column": "real_estate"},
+    {"unresolvable_column": "infrastructure"},
+    {"unresolvable_column": "real_estate"},
+    {"unresolvable_column": "infrastructure"},
+]
+
+# ── Genuine strategy/service changes (spec §2.5) ──────────────────────────────
+# ~5 deals where a schema-stable column takes a real new value at some snapshot,
+# proving dim_deal's latest-snapshot ROW_NUMBER() treatment and exercising
+# qa_strategy_service_changes. `cohort: "post_cutover"` restricts a sub-strategy
+# change to a deal whose first reporting_date >= 2026-01-01 (deal index >= 80) —
+# sub-strategy changes on pre-cutover deals are excluded by design (spec §2.5,
+# "why sub-strategy changes are excluded"). generate_pns_raw.py picks the
+# specific deal and the snapshot at which `new_value` first appears.
+
+GENUINE_CHANGE_DEALS: list[dict] = [
+    {"column": "private_equity",    "old_value": "No",  "new_value": "Yes",       "cohort": "any"},
+    {"column": "Custody",           "old_value": "TBD", "new_value": "Yes",       "cohort": "any"},
+    {"column": "private_debt",      "old_value": "Yes", "new_value": "No",        "cohort": "any"},
+    {"column": "real_estate_equity","old_value": "No",  "new_value": "Yes",       "cohort": "post_cutover"},
+    {"column": "SFDR_eligibility",  "old_value": "No",  "new_value": "Article 8", "cohort": "any"},
+]
+
+# ── Terminal deals with missing measures (qa_terminal_revenue_asset, §2.4 Defect 5) ─
+# ~5 terminal deals (Won/Lost/Rejected) with a null revenue_eur_equiv or null
+# asset at their latest snapshot. Every deal's latest snapshot is Aug 2026 —
+# deals never leave the population once entered (Defect 2). Mix exercises all
+# branches of `missing_fields` (revenue / asset / both).
+
+TERMINAL_MEASURE_GAPS: list[dict] = [
+    {"deal_status": "Won",      "missing": "asset"},
+    {"deal_status": "Won",      "missing": "asset"},
+    {"deal_status": "Lost",     "missing": "revenue"},
+    {"deal_status": "Lost",     "missing": "revenue"},
+    {"deal_status": "Rejected", "missing": "both"},
+]
