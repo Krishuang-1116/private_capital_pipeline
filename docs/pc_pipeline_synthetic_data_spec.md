@@ -411,6 +411,22 @@ Four QA models implement a consistent design philosophy across the pipeline: eng
 
 Structurally clean by design (Huijie-authored in BNP context). Mess lives in pns_raw, not here. The portfolio version extends the BNP version with SCD Type 2 versioning, full financial_sponsor audit trail, and explicit `dim_group` hierarchy.
 
+>[!note] Design rationale — pre-historized source, not dbt snapshot
+>
+> `client_db_raw.csv` arrives pre-historized: SCD Type 2 columns (`client_key`, `effective_from`, `effective_to`, `is_current`) are already present in the raw extract. This is a deliberate portfolio design choice — it was not modeled using `dbt snapshot`.
+>
+> **Why:** `dbt snapshot` is the correct tool when the source is a current-state-only extract — one row per client, with dbt managing history. In that case dbt handles the SCD mechanics automatically, and the staging layer simply reads `dim_client` directly. The temporal join pattern is never exercised.
+>
+> By embedding SCD Type 2 structure directly in the source instead, the portfolio demonstrates two skills instead of one:
+> 1. **Correct SCD Type 2 data structure** — three invariants tested via custom dbt tests: unique `client_key`, exactly one `is_current = true` per `client_id`, contiguous non-overlapping version windows.
+> 2. **Temporal join correctness** — facts pin to the `client_key` of the version row active at deal time, not the current version. This is the pattern that matters in production when consuming any pre-historized dimension.
+>
+> The BNP reality (Client DB as a current-state extract) would call for `dbt snapshot`. This portfolio models the more instructive version of the problem.
+>
+> **Interview framing:** "In production I would use `dbt snapshot` for a current-state source. I modeled SCD Type 2 directly here to demonstrate the underlying mechanics and temporal join pattern that snapshot abstracts away."
+>
+> The `snapshots/` folder remains empty in v1. A v2 addition would introduce a current-state source to demonstrate `dbt snapshot` configuration alongside the existing pre-historized pattern.
+
 ### 3.2 Column Spec
 
 #### Core Identity
