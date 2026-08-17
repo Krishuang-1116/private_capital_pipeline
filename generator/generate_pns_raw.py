@@ -27,6 +27,7 @@ assumed):
 from __future__ import annotations
 
 import csv
+import json
 from pathlib import Path
 
 from shared_state import (
@@ -44,11 +45,13 @@ from shared_state import (
     UNRESOLVABLE_STRATEGY_DEALS,
     GENUINE_CHANGE_DEALS,
     TERMINAL_MEASURE_GAPS,
+    SCD_CLIENT_IDS,
 )
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RAW_OUT = REPO_ROOT / "data" / "raw" / "pns_raw.csv"
 SEED_OUT = REPO_ROOT / "seeds" / "fund_name_corrections.csv"
+MANIFEST_OUT = REPO_ROOT / "data" / "raw" / "pns_raw_manifest.json"
 
 # ── Column enumerations (local to pns_raw; not shared with client_db_raw) ────
 
@@ -169,6 +172,16 @@ ta_rogue_values = {}
 for n, i in enumerate(ta_rogue_deals):
     ta_rogue_values[int(i)] = "FATCA" if n % 2 == 0 else "B7765"
 
+# One Aug-2025-cohort deal per SCD client, so the client's Prospect->Existing
+# transition (decided later, by generate_client_db_raw.py) always has fact
+# data spanning it. Deal client assignment happens here, before client_db_raw
+# picks transition dates — without a guaranteed early-cohort deal, a client
+# with only a couple of deals could easily end up with none of them predating
+# its transition, leaving the SCD scenario dimensionally present but
+# untestable against fact data.
+scd_coverage_idx = reserve(len(SCD_CLIENT_IDS), lambda i: DEAL_COHORTS[i] == SNAPSHOTS[0])
+scd_coverage_map = {idx: SCD_CLIENT_IDS[k] for k, idx in enumerate(scd_coverage_idx)}
+
 collision_map = {idx: COLLISION_PAIRS[k] for k, idx in enumerate(collision_idx)}
 unmatched_map = {idx: UNMATCHED_CLIENT_NAMES[k] for k, idx in enumerate(unmatched_idx)}
 mutation_map = {idx: FUND_NAME_MUTATIONS[k] for k, idx in enumerate(mutation_idx)}
@@ -206,9 +219,27 @@ def strategy_pair(has_anchor: bool, force_unresolvable_yes: bool) -> str:
     return draw(options, weights)
 
 
-def build_deal_rows(i: int) -> list[dict]:
+def build_deal_rows(i: int) -> tuple[list[dict], dict]:
     snaps = deal_snapshot_list(i)
     deal_type = draw(DEAL_TYPES, [0.6, 0.4])
+
+    defect_tags = []
+    if i in collision_map:
+        defect_tags.append("collision")
+    if i in unmatched_map:
+        defect_tags.append("unmatched")
+    if i in mutation_map:
+        defect_tags.append("mutation")
+    if i in unresolvable_map:
+        defect_tags.append("unresolvable_strategy")
+    if i in genuine_change_map:
+        defect_tags.append("genuine_change")
+    if i in terminal_gap_map:
+        defect_tags.append("terminal_gap")
+    if i in ta_rogue_values:
+        defect_tags.append("ta_rogue")
+    if i in scd_coverage_map:
+        defect_tags.append("scd_coverage_anchor")
 
     if i in unmatched_map:
         client = None
@@ -221,6 +252,9 @@ def build_deal_rows(i: int) -> list[dict]:
         entry = mutation_map[i]
         client = CLIENT_BY_ID[entry["client_id"]]
         client_name = entry["pns_client_name"]
+    elif i in scd_coverage_map:
+        client = CLIENT_BY_ID[scd_coverage_map[i]]
+        client_name = client["aliases"][0]
     else:
         client = CLIENT_ROSTER[rng.integers(0, len(CLIENT_ROSTER))]
         # Collision aliases are reserved exclusively for their injected
@@ -378,23 +412,46 @@ def build_deal_rows(i: int) -> list[dict]:
         if entry["missing"] in ("revenue", "both"):
             last["revenue"] = None
 
-    return rows
+    meta = {
+        "deal_index": i,
+        # Ambiguous by design for collision deals — genuinely no single
+        # authoritative client_id, which is the point of the defect.
+        "client_id": None if i in collision_map else (client["client_id"] if client else None),
+        "client_name": client_name,
+        "entry_snapshot": snaps[0].isoformat(),
+        "snapshots": [s.isoformat() for s in snaps],
+        "defect_tags": defect_tags,
+    }
+    return rows, meta
 
 
 def main() -> None:
     all_rows: list[dict] = []
+    deal_manifest: list[dict] = []
     for i in range(TOTAL_DEALS):
-        all_rows.extend(build_deal_rows(i))
+        rows, meta = build_deal_rows(i)
+        all_rows.extend(rows)
+        deal_manifest.append(meta)
+
+    structural_row_count = len(all_rows)
 
     # Defect 4 — byte-identical duplicates: ~3% of each snapshot's rows.
     by_snapshot: dict = {}
     for r in all_rows:
         by_snapshot.setdefault(r["reporting_date"], []).append(r)
     dup_rows = []
+    duplicated_natural_keys = []
     for snap, snap_rows in by_snapshot.items():
         n_dup = max(1, round(len(snap_rows) * 0.03))
         chosen = rng.choice(len(snap_rows), size=n_dup, replace=False)
-        dup_rows.extend(dict(snap_rows[k]) for k in chosen)
+        for k in chosen:
+            dup_rows.append(dict(snap_rows[k]))
+            duplicated_natural_keys.append({
+                "reporting_date": snap_rows[k]["reporting_date"].isoformat(),
+                "location": snap_rows[k]["location"],
+                "client_name": snap_rows[k]["client_name"],
+                "fund_name": snap_rows[k]["fund_name"],
+            })
     all_rows.extend(dup_rows)
 
     # Defect 5a — asset as currency-string format ("$0.54bn") on ~15 rows.
@@ -428,7 +485,18 @@ def main() -> None:
                 "corrected_date": entry["corrected_date"],
             })
 
+    manifest = {
+        "total_rows": len(all_rows),
+        "structural_rows": structural_row_count,
+        "duplicate_rows": len(dup_rows),
+        "deals": deal_manifest,
+        "duplicated_natural_keys": duplicated_natural_keys,
+    }
+    with MANIFEST_OUT.open("w") as f:
+        json.dump(manifest, f, indent=2)
+
     print(f"pns_raw: {len(all_rows)} rows -> {RAW_OUT.relative_to(REPO_ROOT)}")
+    print(f"pns_raw_manifest: -> {MANIFEST_OUT.relative_to(REPO_ROOT)}")
     print(f"fund_name_corrections: {len(FUND_NAME_MUTATIONS)} rows -> {SEED_OUT.relative_to(REPO_ROOT)}")
     print(f"  collision deals:     {sorted(collision_idx)}")
     print(f"  unmatched deals:     {sorted(unmatched_idx)}")
