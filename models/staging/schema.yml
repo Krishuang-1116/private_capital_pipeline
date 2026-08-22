@@ -6,3 +6,7 @@ models:
             combination_of_columns:
               - deal_id
               - reporting_date
+    columns:
+      - name: revenue_eur_equiv
+        data_tests:
+          - not_null
