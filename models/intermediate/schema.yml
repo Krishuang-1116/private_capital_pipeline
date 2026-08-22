@@ -1,0 +1,23 @@
+models:
+  - name: int_backfill_anchor
+    columns:
+      - name: real_estate_equity
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Yes", "No", "TBD", "strategy_unresolvable"]
+      - name: real_estate_debt
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Yes", "No", "TBD", "strategy_unresolvable"]
+      - name: infrastructure_equity
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Yes", "No", "TBD", "strategy_unresolvable"]
+      - name: infrastructure_debt
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Yes", "No", "TBD", "strategy_unresolvable"]
