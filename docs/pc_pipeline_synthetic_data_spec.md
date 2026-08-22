@@ -231,6 +231,10 @@ Asset class (equity vs debt) is determined by the financing type anchor (`privat
 
 **Staging mechanism:** A CTE filtered to `reporting_date = '2025-12-01'` (last pre-cutover snapshot) provides the legacy strategy selections as the backfill anchor. The intermediate model joins post-cutover snapshots of pre-cutover deals against this CTE to resolve sub-strategy values. No new source file needed.
 
+> [!note] Design rationale — backfill direction is inverted from the real BNP implementation
+>
+> In BNP's actual source system, the anchor is the *oldest post-cutover* manager entry, which backfills onto *pre-cutover* rows (new → old). This synthetic model deliberately inverts that: the anchor is the *last pre-cutover* snapshot, deriving sub-strategy values for *post-cutover* rows via the mapping rules (old → new). The inversion is a direct consequence of this project's one-wide-file design (§2.2) versus BNP's two-file setup, where the newer file's structure exists independently and can backfill retroactively. Documented here as a known, intentional simplification, not a design error.
+
 **Handler — resolvable deals:** Sub-strategy columns resolved via backfill mapping. `accepted_values` test on each canonical strategy column (Yes / No / TBD only — no tbd casing leakage, no null leakage on resolvable deals).
 
 **Handler — unresolvable deals:** Sub-strategy columns set to `strategy_unresolvable` flag. Surfaced via `qa_unresolvable_strategy` model referencing the pre-cutover anchor CTE directly — never `dim_deal`. Same engineering boundary principle as `qa_unmatched_clients`: pipeline makes ambiguity visible and actionable, resolution is a business decision.
