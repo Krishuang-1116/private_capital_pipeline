@@ -1,0 +1,18 @@
+models:
+  - name: stg_client
+    columns:
+      - name: client_key
+        data_tests:
+          - not_null
+          - unique
+  - name: client_aliases
+    columns:
+      - name: alias
+        data_tests:
+          - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - client_id
+              - alias

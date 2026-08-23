@@ -1,0 +1,5 @@
+sources:
+  - name: deal_data
+    schema: raw
+    tables:
+      - name: pns_raw
