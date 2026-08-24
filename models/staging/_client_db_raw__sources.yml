@@ -1,5 +1,0 @@
-sources:
-  - name: client_data
-    schema: raw
-    tables:
-      - name: client_db_raw
