@@ -7,9 +7,11 @@ LEFT JOIN {{ref ('client_aliases')}} b
 ON a.client_name = b.alias 
 )
 SELECT 
-    DISTINCT p.* EXCLUDE (count) REPLACE (
-    (CASE WHEN count = 1 AND client_id IS NOT NULL THEN client_id
-            WHEN count > 1 OR client_id IS NULL THEN 'CLIENT-000' 
-        END) AS client_id
-    ) 
-FROM pre_sentinel p
+DISTINCT p.* EXCLUDE (count) REPLACE (
+(CASE WHEN count = 1 AND client_id IS NOT NULL THEN client_id
+        WHEN count > 1 OR client_id IS NULL THEN 'CLIENT-000' 
+    END) AS client_id
+) 
+FROM pre_sentinel p 
+
+
