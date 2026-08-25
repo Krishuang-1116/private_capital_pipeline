@@ -1,0 +1,20 @@
+models:
+  - name: dim_client
+    columns:
+      - name: client_key
+        data_tests:
+          - not_null
+          - unique
+  - name: dim_deal
+    columns:
+      - name: deal_id
+        data_tests:
+          - not_null
+          - unique
+  - name: fact_deal_snapshot
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - deal_id
+              - reporting_date
