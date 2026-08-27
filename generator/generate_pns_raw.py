@@ -309,6 +309,14 @@ def build_deal_rows(i: int) -> tuple[list[dict], dict]:
     if not is_pre_cutover_deal(i):
         private_equity = draw(["Yes", "No", "TBD", "tbd"], [0.42, 0.42, 0.11, 0.05], null_rate=0.01)
         private_debt = draw(["Yes", "No", "TBD", "tbd"], [0.42, 0.42, 0.11, 0.05], null_rate=0.01)
+        # Sub-strategy columns: sticky per deal, same as every other
+        # deal-level attribute — drawn once here, not per-snapshot below.
+        real_estate_equity = draw(STRATEGY_4, [0.3, 0.5, 0.15, 0.05], null_rate=0.60)
+        real_estate_debt = draw(STRATEGY_4, [0.3, 0.5, 0.15, 0.05], null_rate=0.60)
+        infrastructure_equity = draw(STRATEGY_4, [0.3, 0.5, 0.15, 0.05], null_rate=0.60)
+        infrastructure_debt = draw(STRATEGY_4, [0.3, 0.5, 0.15, 0.05], null_rate=0.60)
+        listed_assets_in_portfolio = draw(LISTED_ASSETS_VALUES, [0.25, 0.45, 0.15, 0.1, 0.05], null_rate=0.70)
+        OTC_instruments_in_portfolio = draw(STRATEGY_4, [0.3, 0.5, 0.15, 0.05], null_rate=0.70)
 
     statuses = build_status_trajectory(snaps, deal_type)
     loss_reason = draw(LOSS_REASONS)
@@ -344,12 +352,12 @@ def build_deal_rows(i: int) -> tuple[list[dict], dict]:
                 for col in POST_CUTOVER_STRATEGY_COLS:
                     row[col] = None
             else:
-                row["real_estate_equity"] = draw(STRATEGY_4, [0.3, 0.5, 0.15, 0.05], null_rate=0.60)
-                row["real_estate_debt"] = draw(STRATEGY_4, [0.3, 0.5, 0.15, 0.05], null_rate=0.60)
-                row["infrastructure_equity"] = draw(STRATEGY_4, [0.3, 0.5, 0.15, 0.05], null_rate=0.60)
-                row["infrastructure_debt"] = draw(STRATEGY_4, [0.3, 0.5, 0.15, 0.05], null_rate=0.60)
-                row["listed_assets_in_portfolio"] = draw(LISTED_ASSETS_VALUES, [0.25, 0.45, 0.15, 0.1, 0.05], null_rate=0.70)
-                row["OTC_instruments_in_portfolio"] = draw(STRATEGY_4, [0.3, 0.5, 0.15, 0.05], null_rate=0.70)
+                row["real_estate_equity"] = real_estate_equity
+                row["real_estate_debt"] = real_estate_debt
+                row["infrastructure_equity"] = infrastructure_equity
+                row["infrastructure_debt"] = infrastructure_debt
+                row["listed_assets_in_portfolio"] = listed_assets_in_portfolio
+                row["OTC_instruments_in_portfolio"] = OTC_instruments_in_portfolio
 
         row["Depositary"] = depositary
         row["Custody"] = custody
