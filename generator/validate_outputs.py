@@ -207,12 +207,18 @@ def main() -> None:
                   f"{c['client_id']} transition date within reporting window", str(t))
 
     # ── client_db_raw: alias sparsity ────────────────────────────────────
+    # Alias_2/Alias_3's population rate is no longer just the raw null_rate
+    # roll (~60%/~25%) — build_aliases() also protects any alias a pns_raw
+    # deal actually drew as its client_name from being nulled (same
+    # protection collision aliases already had), so the true rate runs
+    # higher and depends on how many deals happen to use a slot-2/3 alias.
+    # Upper bound widened accordingly; ~60%/~25% are floors, not targets.
     a1_missing = [r for r in client_rows if not r["Alias_1"]]
     check(len(a1_missing) == 0, "Alias_1 always populated", f"{len(a1_missing)} blanks")
     a2_rate = sum(1 for r in client_rows if r["Alias_2"]) / len(client_rows)
     a3_rate = sum(1 for r in client_rows if r["Alias_3"]) / len(client_rows)
-    check(0.4 <= a2_rate <= 0.8, "Alias_2 population rate near ~60%", f"rate={a2_rate:.1%}")
-    check(0.1 <= a3_rate <= 0.4, "Alias_3 population rate near ~25%", f"rate={a3_rate:.1%}")
+    check(0.4 <= a2_rate <= 0.95, "Alias_2 population rate at or above ~60% floor", f"rate={a2_rate:.1%}")
+    check(0.1 <= a3_rate <= 0.5, "Alias_3 population rate at or above ~25% floor", f"rate={a3_rate:.1%}")
 
     # ── cross-file: collision aliases present for both parties ───────────
     for pair in COLLISION_PAIRS:

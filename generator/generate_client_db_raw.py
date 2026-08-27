@@ -43,6 +43,19 @@ from shared_state import (
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RAW_OUT = REPO_ROOT / "data" / "raw" / "client_db_raw.csv"
 MANIFEST_OUT = REPO_ROOT / "data" / "raw" / "client_db_raw_manifest.json"
+PNS_MANIFEST_IN = REPO_ROOT / "data" / "raw" / "pns_raw_manifest.json"
+
+# generate_pns_raw.py runs first in the fixed generator order and writes
+# this manifest as ground truth for which alias each deal actually drew as
+# its client_name — build_aliases() below needs this to keep its sparsity
+# roll from nulling out an alias slot a real deal already depends on.
+with PNS_MANIFEST_IN.open() as _f:
+    _PNS_MANIFEST = json.load(_f)
+
+USED_CLIENT_NAMES: dict[str, set[str]] = {}
+for _deal in _PNS_MANIFEST["deals"]:
+    if _deal["client_id"] is not None:
+        USED_CLIENT_NAMES.setdefault(_deal["client_id"], set()).add(_deal["client_name"])
 
 CLIENT_INCEPTION_ANCHOR = date(2015, 1, 1)
 # Aligned to the first/second-to-last snapshot (not just "within the
@@ -103,6 +116,7 @@ def random_date(start: date, end: date) -> date:
 def build_aliases(client: dict) -> tuple[str | None, str | None, str | None]:
     aliases = client["aliases"]
     alias_1 = aliases[0]
+    used = USED_CLIENT_NAMES.get(client["client_id"], set())
 
     def slot(idx: int, null_rate: float) -> str | None:
         if idx >= len(aliases):
@@ -111,7 +125,10 @@ def build_aliases(client: dict) -> tuple[str | None, str | None, str | None]:
         # Collision aliases are load-bearing for qa_alias_collision — they
         # must survive regardless of the normal sparsity roll, or the
         # downstream unpivot loses the fan-out on one side of the pair.
-        if value in COLLISION_ALIAS_STRINGS:
+        # Aliases a pns_raw deal actually drew as its client_name are
+        # load-bearing too — nulling one here would spuriously unmatch a
+        # deal that has nothing to do with the 3 real injected defects.
+        if value in COLLISION_ALIAS_STRINGS or value in used:
             return value
         return None if rng.random() < null_rate else value
 
