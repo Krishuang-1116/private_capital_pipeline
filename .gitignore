@@ -16,3 +16,4 @@ data/raw/
 >>>>>>> fbc0452 (Update .gitignore)
 CLAUDE.md
 .DS_Store
+.vscode/
