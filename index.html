@@ -1,190 +1,15 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Modeling Private Capital</title>
-<meta name="description" content="A dbt project modeling a private-capital deal pipeline — every injected defect ships with its handler.">
-<style>
-/* ============================================================================
-   PORTFOLIO PAGE — private_capital_pipeline
-   HOW TO TAILOR THE DESIGN: every knob is a CSS variable in :root below.
-   Change a value once and it updates everywhere. Notes inline.
-   ============================================================================ */
-
-:root{
-  /* ---- FONT (you asked for Helvetica / your LinkedIn look) -----------------
-     Swap the whole family here. Want a different font? Replace this one line.  */
-  --font: "Helvetica Neue", Helvetica, -apple-system, system-ui, "Segoe UI", Arial, sans-serif;
-  --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-
-  /* ---- TYPE SCALE (rem). Nudge these to make everything larger/smaller. ---- */
-  --h1: clamp(2.3rem, 5.5vw, 3.3rem);
-  --h2: 1.55rem;
-  --h3: 1.18rem;
-  --body: 17px;
-
-  /* ---- LAYOUT -------------------------------------------------------------
-     --maxw is the reading column width. Widen for a roomier page.             */
-  --maxw: 760px;
-  --pad: 24px;
-
-  /* ---- COLOUR : LIGHT (bare :root = system default & light) ----------------
-     --accent is the single brand colour; change it and the whole page shifts. */
-  --paper:#F5F6F5;        /* page background — cool near-white */
-  --surface:#FFFFFF;      /* cards */
-  --ink:#161A19;          /* primary text */
-  --ink-soft:#4C5551;     /* secondary text */
-  --ink-faint:#818A86;    /* labels, captions */
-  --line:#E2E5E3;         /* hairlines / borders */
-  --accent:#0C6B60;       /* deep teal — links, ids, accents */
-  --fix:#2E7D5B;          /* "resolved" green */
-  --chip:#EAF0EE;         /* pill backgrounds */
-
-  /* ---- CODE THEME (dark in every mode, on purpose) ------------------------ */
-  --code-bg:#13181B; --code-line:#283037; --code-text:#D6DEE3;
-  --code-comment:#7C8A93; --code-kw:#66B6AA; --code-jinja:#D7A85E; --code-str:#C98A6A;
-}
-/* ---- COLOUR : DARK — only the tokens change (structure stays identical) --- */
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --paper:#0F1413; --surface:#161C1A; --ink:#E9EDEB; --ink-soft:#A7AFAB;
-    --ink-faint:#727B77; --line:#252C2A; --accent:#3EB6A4; --fix:#5FB98C; --chip:#1B2422;
-  }
-}
-:root[data-theme="dark"]{
-  --paper:#0F1413; --surface:#161C1A; --ink:#E9EDEB; --ink-soft:#A7AFAB;
-  --ink-faint:#727B77; --line:#252C2A; --accent:#3EB6A4; --fix:#5FB98C; --chip:#1B2422;
-}
-
-/* ============================================================================
-   BASE
-   ============================================================================ */
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
-body{
-  margin:0;background:var(--paper);color:var(--ink);
-  font-family:var(--font);font-size:var(--body);line-height:1.6;
-  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
-}
-.wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--pad)}
-a{color:var(--accent);text-decoration:none}
-a:hover{text-decoration:underline}
-:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
-code{font-family:var(--mono);font-size:.86em}
-h1,h2,h3{text-wrap:balance}
-
-/* mono uppercase label used for eyebrows + tags */
-.eyebrow{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.13em;
-  text-transform:uppercase;color:var(--accent)}
-
-/* ---- top bar (name + links). Minimal, non-sticky to keep friction low. ---- */
-.topbar{border-bottom:1px solid var(--line)}
-.topbar .wrap{display:flex;align-items:center;justify-content:space-between;
-  height:56px;font-family:var(--mono);font-size:13px}
-.topbar .who{color:var(--ink);font-weight:500;letter-spacing:.02em}
-.topbar .links a{color:var(--ink-soft);margin-left:18px}
-.topbar .links a:hover{color:var(--accent);text-decoration:none}
-
-/* ============================================================================
-   HERO
-   ============================================================================ */
-.hero{padding:76px 0 44px}
-.hero h1{font-size:var(--h1);font-weight:700;line-height:1.05;letter-spacing:-.02em;margin:.55rem 0 0}
-.hero .lede{font-size:1.15rem;color:var(--ink-soft);max-width:60ch;margin:1.3rem 0 0}
-.hero .thesis{border-left:3px solid var(--accent);padding-left:18px;margin:1.9rem 0 0;
-  font-size:1.12rem;line-height:1.5;max-width:58ch;color:var(--ink)}
-.hero-meta{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;margin-top:2rem}
-.btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14px;
-  color:var(--surface);background:var(--ink);padding:10px 16px;border-radius:7px}
-.btn:hover{background:var(--accent);color:#fff;text-decoration:none}
-.btn.ghost{color:var(--ink);background:transparent;border:1px solid var(--line)}
-.btn.ghost:hover{border-color:var(--accent);color:var(--accent);background:transparent}
-.stackline{font-family:var(--mono);font-size:12.5px;color:var(--ink-faint);flex-basis:100%;margin-top:4px}
-
-/* ============================================================================
-   SECTION RHYTHM
-   ============================================================================ */
-section{padding:38px 0}
-.rule{height:1px;background:var(--line);border:0;margin:0}
-.section-head{margin:0 0 22px}
-.section-head h2{font-size:var(--h2);font-weight:700;letter-spacing:-.01em;margin:.35rem 0 0}
-.section-head p{color:var(--ink-soft);margin:.6rem 0 0;max-width:64ch}
-
-/* ============================================================================
-   ARCHITECTURE DIAGRAM  (inline SVG, themed via CSS variables)
-   ============================================================================ */
-.diagram-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
-svg.arch{display:block;min-width:640px;width:100%;height:auto}
-.arch .box{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
-.arch .box-q{fill:var(--chip);stroke:var(--accent)}
-.arch .lyr{font-family:var(--mono);font-size:11px;letter-spacing:.1em;fill:var(--ink-faint);text-transform:uppercase}
-.arch .node{font-family:var(--mono);font-size:12px;fill:var(--ink)}
-.arch .flow{stroke:var(--ink-faint);stroke-width:1.4;fill:none;marker-end:url(#ah)}
-.arch .flow-q{stroke:var(--accent);stroke-width:1.4;fill:none;stroke-dasharray:4 3;marker-end:url(#ahq)}
-.arch .ahead{fill:var(--ink-faint)} .arch .ahead-q{fill:var(--accent)}
-.diagram-cap{font-size:14px;color:var(--ink-faint);margin-top:14px;max-width:62ch}
-
-/* ============================================================================
-   CARDS  (defects + tests share this)
-   ============================================================================ */
-.card{border:1px solid var(--line);border-radius:12px;background:var(--surface);
-  padding:24px 24px 26px;margin:20px 0}
-.card-top{display:flex;align-items:baseline;gap:13px;flex-wrap:wrap}
-.tag-id{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--accent);letter-spacing:.04em}
-.card h3{font-size:var(--h3);font-weight:700;margin:0;flex:1 1 auto;min-width:190px;letter-spacing:-.01em}
-.pill{font-family:var(--mono);font-size:11px;letter-spacing:.03em;padding:4px 9px;border-radius:20px;
-  white-space:nowrap;background:var(--chip);color:var(--ink-soft)}
-.pill-fix{color:var(--fix)}
-.card .one-line{color:var(--ink-soft);margin:.65rem 0 1rem;max-width:66ch}
-
-/* code block */
-figure.snippet{margin:0}
-.code-file{font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;color:var(--code-comment);
-  background:var(--code-bg);border:1px solid var(--code-line);border-bottom:0;
-  border-radius:9px 9px 0 0;padding:8px 16px}
-pre.code{margin:0;background:var(--code-bg);border:1px solid var(--code-line);border-radius:0 0 9px 9px;
-  padding:15px 16px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.62;color:var(--code-text)}
-.tok-c{color:var(--code-comment);font-style:italic}
-.tok-k{color:var(--code-kw)}
-.tok-j{color:var(--code-jinja)}
-.tok-s{color:var(--code-str)}
-
-.why{display:flex;gap:11px;margin-top:15px;font-size:15px;color:var(--ink-soft);line-height:1.5}
-.why-tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;
-  color:var(--accent);flex:0 0 auto;padding-top:2px}
-
-/* ============================================================================
-   MODELING DECISIONS  (numbered — the numbering is real: a list of choices)
-   ============================================================================ */
-.decision{display:flex;gap:18px;padding:20px 0;border-top:1px solid var(--line)}
-.dec-n{font-family:var(--mono);font-size:13px;color:var(--accent);flex:0 0 auto;padding-top:4px;width:26px}
-.dec-body h3{font-size:var(--h3);font-weight:700;margin:0 0 .5rem;letter-spacing:-.01em}
-.dec-body p{margin:.4rem 0 0;color:var(--ink-soft);max-width:64ch}
-.dec-rej{font-size:14px}
-.dec-rej .why-tag{margin-right:2px}
-
-/* ============================================================================
-   STACK + FOOTER
-   ============================================================================ */
-.stack-grid{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 20px}
-.chip{font-family:var(--mono);font-size:12.5px;color:var(--ink);background:var(--chip);
-  border:1px solid var(--line);border-radius:7px;padding:7px 12px}
-.roadmap li{margin:.35rem 0;color:var(--ink-soft)}
-.roadmap b{color:var(--ink)}
-footer{border-top:1px solid var(--line);margin-top:20px}
-footer .wrap{padding-top:34px;padding-bottom:60px;display:flex;flex-wrap:wrap;gap:8px 20px;
-  justify-content:space-between;font-family:var(--mono);font-size:12.5px;color:var(--ink-faint)}
-footer a{color:var(--ink-soft)}
-
-@media (max-width:520px){ body{font-size:16px} .hero{padding:52px 0 30px} }
-@media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto} }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Modeling Private Capital</title>
+  <meta name="description" content="A dbt project modeling a private-capital deal pipeline — every injected defect ships with its handler.">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<!-- ======================= TOP BAR ======================= -->
-<!-- EDIT HERE — your name + links -->
+<!-- Top bar -->
 <div class="topbar">
   <div class="wrap">
     <span class="who">Kris He Huang</span>
@@ -195,11 +20,10 @@ footer a{color:var(--ink-soft)}
   </div>
 </div>
 
-<!-- ======================= HERO ======================= -->
+<!-- Hero -->
 <header class="hero">
   <div class="wrap">
     <p class="eyebrow">Analytics Engineering · dbt · DuckDB → Snowflake</p>
-    <!-- EDIT HERE — headline + one-sentence description -->
     <h1>Modeling private capital, defect by defect.</h1>
     <p class="lede">A dbt project that models a private-capital deal pipeline from two messy source systems — a monthly reporting extract and a CRM client master — and ships a handler for every defect it injects.</p>
     <p class="thesis">Engineering surfaces ambiguity with full diagnostic context; resolution is a business decision. A defect the pipeline resolves is a skill demonstration — a defect it can't is surfaced, not silently patched.</p>
@@ -213,21 +37,20 @@ footer a{color:var(--ink-soft)}
 
 <hr class="rule">
 
-<!-- ======================= PROBLEM ======================= -->
+<!-- Problem -->
 <section>
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow">The problem</p>
       <h2>Why private-capital data breaks the easy assumptions.</h2>
     </div>
-    <!-- EDIT HERE — problem framing -->
     <p style="color:var(--ink-soft);max-width:64ch;margin:0">A deal isn't an immutable event — it's re-reported every month, so the same deal appears in up to thirteen snapshots and naive counts multiply it. Client identity is fuzzy: one investor shows up under many legal-entity spellings across funds and jurisdictions, and two different entities sometimes share an alias. The reporting schema changed mid-year — a January cutover swapped two strategy columns for four sub-strategy columns and never backfilled the old deals. Money arrives dirty: asset values as currency strings, and roughly a sixth of revenue in non-EUR with no exchange rate. And clients themselves change state over time, so "who was this deal's client at the time" is a point-in-time question, not a lookup. This project injects each of these deliberately — then hands you the handler.</p>
   </div>
 </section>
 
 <hr class="rule">
 
-<!-- ======================= ARCHITECTURE ======================= -->
+<!-- Architecture -->
 <section>
   <div class="wrap">
     <div class="section-head">
@@ -236,34 +59,65 @@ footer a{color:var(--ink-soft)}
       <p>The spine runs raw → staging → intermediate → marts. Quality models tap the staging and intermediate layers directly to surface ambiguity — they never read from <code>dim_deal</code>, so the business-facing marts stay insulated from sentinel coercion.</p>
     </div>
     <div class="diagram-scroll">
-      <!-- EDIT HERE — architecture diagram. Boxes are <rect>+<text> pairs; arrows are <path>. -->
-      <svg class="arch" viewBox="0 0 660 300" role="img" aria-label="Pipeline from two raw sources through staging, intermediate and marts, with a parallel quality lane that surfaces defects.">
+      <svg class="arch" viewBox="0 0 690 310" role="img" aria-label="Pipeline from two raw sources through staging, intermediate and marts, with a parallel quality lane that surfaces defects.">
         <defs>
-          <marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" class="ahead"/></marker>
-          <marker id="ahq" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" class="ahead-q"/></marker>
+          <marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" class="ahead"/>
+          </marker>
+          <marker id="ahq" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" class="ahead-q"/>
+          </marker>
         </defs>
-        <text class="lyr" x="16" y="20">raw</text>
-        <text class="lyr" x="180" y="20">staging</text>
-        <text class="lyr" x="356" y="20">intermediate</text>
-        <text class="lyr" x="536" y="20">marts</text>
-        <rect class="box" x="16" y="60" width="120" height="34" rx="6"/><text class="node" x="30" y="81">pns_raw</text>
-        <rect class="box" x="16" y="104" width="120" height="34" rx="6"/><text class="node" x="30" y="125">client_db_raw</text>
-        <rect class="box" x="180" y="42" width="140" height="30" rx="6"/><text class="node" x="192" y="61">stg_pns</text>
-        <rect class="box" x="180" y="80" width="140" height="30" rx="6"/><text class="node" x="192" y="99">stg_client</text>
-        <rect class="box" x="180" y="118" width="140" height="30" rx="6"/><text class="node" x="192" y="137">client_aliases</text>
-        <rect class="box" x="180" y="156" width="140" height="30" rx="6"/><text class="node" x="192" y="175" font-size="11">stg_backfill_anchor</text>
-        <rect class="box" x="356" y="60" width="150" height="30" rx="6"/><text class="node" x="368" y="79">int_pns_deals</text>
-        <rect class="box" x="356" y="98" width="150" height="30" rx="6"/><text class="node" x="368" y="117" font-size="11">int_backfill_anchor</text>
-        <rect class="box" x="536" y="42" width="110" height="30" rx="6"/><text class="node" x="548" y="61">dim_client</text>
-        <rect class="box" x="536" y="80" width="110" height="30" rx="6"/><text class="node" x="548" y="99">dim_deal</text>
-        <rect class="box" x="536" y="118" width="110" height="30" rx="6"/><text class="node" x="547" y="137" font-size="10.5">fact_deal_snapshot</text>
-        <text class="lyr" x="356" y="214" fill="var(--accent)">quality · surfaces defects</text>
-        <rect class="box-q" x="356" y="228" width="150" height="26" rx="6"/><text class="node" x="366" y="245" font-size="11">qa_unmatched_clients</text>
-        <rect class="box-q" x="356" y="262" width="150" height="26" rx="6"/><text class="node" x="366" y="279" font-size="11">qa_alias_collision</text>
-        <rect class="box-q" x="516" y="245" width="130" height="26" rx="6"/><text class="node" x="526" y="262" font-size="11">qa_terminal · +3</text>
-        <path class="flow" d="M136,77 L176,57"/><path class="flow" d="M136,90 L176,95"/><path class="flow" d="M136,121 L176,133"/>
-        <path class="flow" d="M320,75 L352,75"/><path class="flow" d="M320,133 L352,110"/>
-        <path class="flow" d="M506,75 L532,57"/><path class="flow" d="M506,90 L532,95"/><path class="flow" d="M506,113 L532,120"/>
+        <text class="lyr" x="16" y="20">Raw</text>
+        <text class="lyr" x="180" y="20">Staging</text>
+        <text class="lyr" x="356" y="20">Intermediate</text>
+        <text class="lyr" x="536" y="20">Marts</text>
+        <rect class="box" x="16" y="60" width="120" height="34" rx="6"/>
+        <text class="node" x="30" y="81">pns_raw</text>
+        <rect class="box" x="16" y="104" width="120" height="34" rx="6"/>
+        <text class="node" x="30" y="125">client_db_raw</text>
+        <rect class="box" x="180" y="42" width="145" height="30" rx="6"/>
+        <text class="node" x="192" y="61">stg_pns</text>
+        <rect class="box" x="180" y="80" width="145" height="30" rx="6"/>
+        <text class="node" x="192" y="99">stg_client</text>
+        <rect class="box" x="180" y="118" width="145" height="30" rx="6"/>
+        <text class="node" x="192" y="137">client_aliases</text>
+        <rect class="box" x="180" y="156" width="145" height="30" rx="6"/>
+        <text class="node" x="192" y="175" font-size="11">stg_backfill_anchor</text>
+        <rect class="box" x="356" y="60" width="150" height="30" rx="6"/>
+        <text class="node" x="368" y="79">int_pns_deals</text>
+        <rect class="box" x="356" y="98" width="150" height="30" rx="6"/>
+        <text class="node" x="368" y="117" font-size="11">int_backfill_anchor</text>
+        <rect class="box" x="536" y="42" width="150" height="30" rx="6"/>
+        <text class="node" x="548" y="61">dim_client</text>
+        <rect class="box" x="536" y="80" width="150" height="30" rx="6"/>
+        <text class="node" x="548" y="99">dim_deal</text>
+        <rect class="box" x="536" y="118" width="150" height="30" rx="6"/>
+        <text class="node" x="547" y="137" font-size="10.5">fact_deal_snapshot</text>
+        <text class="lyr" x="371" y="210" fill="var(--accent)">Quality</text>
+
+        <rect class="box-q" x="46" y="230" width="200" height="26" rx="6"/>
+        <text class="node" x="56" y="247">qa_unmatched_clients</text>
+        <rect class="box-q" x="256" y="230" width="200" height="26" rx="6"/>
+        <text class="node" x="266" y="247">qa_alias_collision</text>
+        <rect class="box-q" x="466" y="230" width="200" height="26" rx="6"/>
+        <text class="node" x="476" y="247">qa_terminal_revenue_asset</text>
+
+        <rect class="box-q" x="46" y="264" width="200" height="26" rx="6"/>
+        <text class="node" x="56" y="281">qa_strategy_service_changes</text>
+        <rect class="box-q" x="256" y="264" width="200" height="26" rx="6"/>
+        <text class="node" x="266" y="281">qa_unsolvable_strategy</text>
+        <rect class="box-q" x="466" y="264" width="200" height="26" rx="6"/>
+        <text class="node" x="476" y="281">qa_strategy_ambiguous</text>
+
+        <path class="flow" d="M136,77 L176,57"/>
+        <path class="flow" d="M136,90 L176,95"/>
+        <path class="flow" d="M136,121 L176,133"/>
+        <path class="flow" d="M325,75 L352,75"/>
+        <path class="flow" d="M325,133 L352,110"/>
+        <path class="flow" d="M506,75 L532,57"/>
+        <path class="flow" d="M506,90 L532,95"/>
+        <path class="flow" d="M506,113 L532,120"/>
         <path class="flow-q" d="M250,190 L400,225"/>
         <path class="flow-q" d="M430,132 L430,224"/>
       </svg>
@@ -274,16 +128,15 @@ footer a{color:var(--ink-soft)}
 
 <hr class="rule">
 
-<!-- ======================= DEFECTS RESOLVED ======================= -->
+<!-- Resolved defects -->
 <section>
   <div class="wrap">
     <div class="section-head">
-      <p class="eyebrow">Defect class I · resolved in the pipeline</p>
+      <p class="eyebrow">Defect class 1 · resolved in the pipeline</p>
       <h2>Five defects the staging layer cleans up deterministically.</h2>
       <p>These are the mess going in. Each is injected on purpose by the synthetic-data generator, and each has a handler that every downstream consumer would want applied identically — so it belongs in staging.</p>
     </div>
     
-    <!-- EDIT HERE — resolved defect "No stable natural key". Copy this whole <article> to add another. -->
     <article class="card">
       <div class="card-top">
         <span class="tag-id">D1</span>
@@ -305,7 +158,6 @@ fund_with_ID AS (
       <div class="why"><span class="why-tag">why it's hard here</span><span>Identity has to be reconstructed before anything can join. Hashing a stable business tuple gives every snapshot of a deal the same key; folding the date in would mint a new deal every month.</span></div>
     </article>
 
-    <!-- EDIT HERE — resolved defect "Periodic-snapshot grain". Copy this whole <article> to add another. -->
     <article class="card">
       <div class="card-top">
         <span class="tag-id">D2</span>
@@ -324,7 +176,6 @@ SELECT * EXCLUDE(reporting_date, rnk) FROM dedup WHERE rnk = 1</pre>
       <div class="why"><span class="why-tag">why it's hard here</span><span>A dimension row must be point-in-time-correct, not a pile of monthly repeats. Choosing the latest snapshot for the dimension while preserving all snapshots in the fact table is the deliberate call a uniqueness test then guards.</span></div>
     </article>
 
-    <!-- EDIT HERE — resolved defect "Schema evolution with backfill". Copy this whole <article> to add another. -->
     <article class="card">
       <div class="card-top">
         <span class="tag-id">D3</span>
@@ -346,7 +197,6 @@ SELECT * EXCLUDE(reporting_date, rnk) FROM dedup WHERE rnk = 1</pre>
       <div class="why"><span class="why-tag">why it's hard here</span><span>The reconstruction is era-aware: pre-cutover rows are left alone, post-cutover-native deals are trusted, and only genuinely-derivable rows are filled. Where no financing anchor exists, the pipeline flags rather than guesses.</span></div>
     </article>
 
-    <!-- EDIT HERE — resolved defect "Byte-identical duplicates". Copy this whole <article> to add another. -->
     <article class="card">
       <div class="card-top">
         <span class="tag-id">D4</span>
@@ -368,7 +218,6 @@ dedup AS (
       <div class="why"><span class="why-tag">why it's hard here</span><span>Duplicate snapshot rows would silently double-count every measure. Dedup belongs in staging, keyed on the grain — and because it's fully resolved there, a generic uniqueness test replaces a QA model.</span></div>
     </article>
 
-    <!-- EDIT HERE — resolved defect "Mixed currency / measure corruption". Copy this whole <article> to add another. -->
     <article class="card">
       <div class="card-top">
         <span class="tag-id">D5</span>
@@ -394,16 +243,15 @@ asset_revenue AS (
 
 <hr class="rule">
 
-<!-- ======================= DEFECTS SURFACED ======================= -->
+<!-- Surfaced defects -->
 <section>
   <div class="wrap">
     <div class="section-head">
-      <p class="eyebrow">Defect class II · surfaced for the business</p>
+      <p class="eyebrow">Defect class 2 · surfaced for the business</p>
       <h2>Six ambiguities the pipeline refuses to guess at.</h2>
       <p>These can't be resolved by engineering without inventing an answer. Each <code>qa_*</code> model surfaces the affected rows with full diagnostic context and a named resolution owner — the pipeline's job ends at making the ambiguity visible and actionable.</p>
     </div>
     
-    <!-- EDIT HERE — surfaced defect "Unmatched clients". Copy this whole <article> to add another. -->
     <article class="card">
       <div class="card-top">
         <span class="tag-id">Q1</span>
@@ -423,7 +271,6 @@ WHERE b.client_id IS NULL</pre>
       <div class="why"><span class="why-tag">why it's hard here</span><span>One limited partner appears under many legal-entity spellings across funds and jurisdictions. A name the alias table can't resolve is surfaced for a human, not forced onto a wrong client_key.</span></div>
     </article>
 
-    <!-- EDIT HERE — surfaced defect "Alias collision". Copy this whole <article> to add another. -->
     <article class="card">
       <div class="card-top">
         <span class="tag-id">Q2</span>
@@ -444,7 +291,6 @@ HAVING COUNT(DISTINCT b.client_id) &gt; 1</pre>
       <div class="why"><span class="why-tag">why it's hard here</span><span>Two distinct legal entities registered the same alias string. Engineering can detect the fan-out but can't decide which entity is right — so the model reports it with both candidate client_ids attached.</span></div>
     </article>
 
-    <!-- EDIT HERE — surfaced defect "Unresolvable strategy". Copy this whole <article> to add another. -->
     <article class="card">
       <div class="card-top">
         <span class="tag-id">Q3</span>
@@ -463,7 +309,6 @@ WHERE (real_estate = 'Yes' OR infrastructure = 'Yes')
       <div class="why"><span class="why-tag">why it's hard here</span><span>The backfill in Defect 3 needs a financing-type anchor. When none exists the sub-strategy is genuinely underivable — the pipeline flags it 'strategy_unresolvable' and surfaces it here for manual classification.</span></div>
     </article>
 
-    <!-- EDIT HERE — surfaced defect "Strategy / service changes". Copy this whole <article> to add another. -->
     <article class="card">
       <div class="card-top">
         <span class="tag-id">Q4</span>
@@ -486,7 +331,6 @@ WHERE value != previous_value</pre>
       <div class="why"><span class="why-tag">why it's hard here</span><span>Proves dim_deal's latest-snapshot treatment is a deliberate choice, not silent data loss. '!=' skips null-touching transitions on purpose — the cutover NULL -&gt; value boundary is not a real change.</span></div>
     </article>
 
-    <!-- EDIT HERE — surfaced defect "Ambiguous strategy change". Copy this whole <article> to add another. -->
     <article class="card">
       <div class="card-top">
         <span class="tag-id">Q5</span>
@@ -507,7 +351,6 @@ WHERE value != previous_value</pre>
       <div class="why"><span class="why-tag">why it's hard here</span><span>Staging cannot tell a real strategy update from a late backfill fix on these columns. Rather than pick one and be silently wrong, the pipeline surfaces the ambiguity. (Zero rows by generator design — the invariant is that none leak in.)</span></div>
     </article>
 
-    <!-- EDIT HERE — surfaced defect "Terminal measure gaps". Copy this whole <article> to add another. -->
     <article class="card">
       <div class="card-top">
         <span class="tag-id">Q6</span>
@@ -532,7 +375,7 @@ WHERE rnk = 1 AND deal_status IN ('Won','Rejected','Lost')
 
 <hr class="rule">
 
-<!-- ======================= TESTS ======================= -->
+<!-- Tests -->
 <section>
   <div class="wrap">
     <div class="section-head">
@@ -541,7 +384,6 @@ WHERE rnk = 1 AND deal_status IN ('Won','Rejected','Lost')
       <p>A selection from the suite — the assertions that guard grain, cross-source consistency, slowly-changing-dimension integrity, and the completeness of the QA surfacing itself.</p>
     </div>
     
-    <!-- EDIT HERE — featured test "SCD Type 2 integrity". -->
     <article class="card">
       <div class="card-top">
         <span class="tag-id">TEST</span>
@@ -557,7 +399,6 @@ HAVING SUM(is_current) != 1</pre>
 </figure>
     </article>
 
-    <!-- EDIT HERE — featured test "Cross-source client_type consistency". -->
     <article class="card">
       <div class="card-top">
         <span class="tag-id">TEST</span>
@@ -575,7 +416,6 @@ WHERE a.client_type IS DISTINCT FROM b.client_type</pre>
 </figure>
     </article>
 
-    <!-- EDIT HERE — featured test "Grain / no fan-out on the deal-client join". -->
     <article class="card">
       <div class="card-top">
         <span class="tag-id">TEST</span>
@@ -593,7 +433,6 @@ HAVING COUNT(b.client_id) != 1</pre>
 </figure>
     </article>
 
-    <!-- EDIT HERE — featured test "Exhaustive surfacing invariant". -->
     <article class="card">
       <div class="card-top">
         <span class="tag-id">TEST</span>
@@ -618,7 +457,7 @@ WHERE b.deal_id IS NULL</pre>
 
 <hr class="rule">
 
-<!-- ======================= MODELING DECISIONS ======================= -->
+<!-- Modeling decisions -->
 <section>
   <div class="wrap">
     <div class="section-head">
@@ -626,7 +465,6 @@ WHERE b.deal_id IS NULL</pre>
       <h2>Four calls, and the alternative each one rejects.</h2>
     </div>
     
-    <!-- EDIT HERE — modeling decision 1. -->
     <article class="decision">
       <div class="dec-n">01</div>
       <div class="dec-body">
@@ -636,7 +474,6 @@ WHERE b.deal_id IS NULL</pre>
       </div>
     </article>
 
-    <!-- EDIT HERE — modeling decision 2. -->
     <article class="decision">
       <div class="dec-n">02</div>
       <div class="dec-body">
@@ -646,7 +483,6 @@ WHERE b.deal_id IS NULL</pre>
       </div>
     </article>
 
-    <!-- EDIT HERE — modeling decision 3. -->
     <article class="decision">
       <div class="dec-n">03</div>
       <div class="dec-body">
@@ -656,7 +492,6 @@ WHERE b.deal_id IS NULL</pre>
       </div>
     </article>
 
-    <!-- EDIT HERE — modeling decision 4. -->
     <article class="decision">
       <div class="dec-n">04</div>
       <div class="dec-body">
@@ -670,18 +505,20 @@ WHERE b.deal_id IS NULL</pre>
 
 <hr class="rule">
 
-<!-- ======================= STACK + ROADMAP ======================= -->
+<!-- Stack and roadmap -->
 <section>
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow">Stack &amp; roadmap</p>
       <h2>Built to move from a laptop to a warehouse.</h2>
     </div>
-    <!-- EDIT HERE — stack chips -->
     <div class="stack-grid">
-      <span class="chip">dbt-fusion</span><span class="chip">DuckDB · dev</span>
-      <span class="chip">Snowflake · migrating</span><span class="chip">MetricFlow</span>
-      <span class="chip">FastAPI</span><span class="chip">GitHub Actions</span>
+      <span class="chip">dbt-fusion</span>
+      <span class="chip">DuckDB · dev</span>
+      <span class="chip">Snowflake · migrating</span>
+      <span class="chip">MetricFlow</span>
+      <span class="chip">FastAPI</span>
+      <span class="chip">GitHub Actions</span>
     </div>
     <p style="color:var(--ink-soft);max-width:64ch;margin:0 0 14px">Developed on DuckDB for fast local iteration; the model is warehouse-portable and is being migrated to Snowflake as the production target.</p>
     <ul class="roadmap">
@@ -693,7 +530,7 @@ WHERE b.deal_id IS NULL</pre>
   </div>
 </section>
 
-<!-- ======================= FOOTER ======================= -->
+<!-- Footer -->
 <footer>
   <div class="wrap">
     <span>Kris He Huang · Analytics Engineering</span>
@@ -705,9 +542,7 @@ WHERE b.deal_id IS NULL</pre>
 </footer>
 
 <script>
-/* Progressive syntax coloring. ALL code is real text inside <pre class="code">,
-   so it is in the HTML source and stays readable with JS disabled — this only adds colour.
-   To change a query: just edit the plain SQL in the <pre>. No spans to hand-wrap. */
+/* Adds syntax colors to the SQL examples. */
 (function () {
   var KW = /\b(WITH|SELECT|DISTINCT|REPLACE|EXCLUDE|LEFT JOIN|INNER JOIN|CROSS JOIN|JOIN|GROUP BY|ORDER BY|PARTITION BY|OVER|ROW_NUMBER|LAG|COALESCE|TRY_CAST|CAST|REGEXP_EXTRACT|string_agg|COUNT|SUM|MIN|MAX|UNION ALL|UNION|IS DISTINCT FROM|IS NOT NULL|IS NULL|AS|ON|AND|OR|NOT|IN|LIKE|LOWER|TRIM|CASE|WHEN|THEN|ELSE|END|FROM|WHERE|HAVING|DATE|DOUBLE|INTEGER|BOOLEAN|VARCHAR|true|false)\b/g;
   function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }

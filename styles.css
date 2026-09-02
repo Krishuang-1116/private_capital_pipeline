@@ -1,0 +1,153 @@
+/* Main settings for the portfolio page. Change these variables to update the design. */
+
+:root{
+  /* Fonts */
+  --font: "Helvetica Neue", Helvetica, -apple-system, system-ui, "Segoe UI", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* Font sizes */
+  --h1: clamp(2.3rem, 5.5vw, 3.3rem);
+  --h2: 1.55rem;
+  --h3: 1.18rem;
+  --body: 17px;
+
+  /* Page width and spacing */
+  --maxw: 760px;
+  --pad: 24px;
+
+  /* Light theme colors */
+  --paper:#F5F6F5;        /* page background — cool near-white */
+  --surface:#FFFFFF;      /* cards */
+  --ink:#161A19;          /* primary text */
+  --ink-soft:#4C5551;     /* secondary text */
+  --ink-faint:#818A86;    /* labels, captions */
+  --line:#E2E5E3;         /* hairlines / borders */
+  --accent:#0C6B60;       /* deep teal — links, ids, accents */
+  --fix:#2E7D5B;          /* "resolved" green */
+  --chip:#EAF0EE;         /* pill backgrounds */
+
+  /* Code block colors */
+  --code-bg:#13181B; --code-line:#283037; --code-text:#D6DEE3;
+  --code-comment:#7C8A93; --code-kw:#66B6AA; --code-jinja:#D7A85E; --code-str:#C98A6A;
+}
+/* Dark theme colors */
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1413; --surface:#161C1A; --ink:#E9EDEB; --ink-soft:#A7AFAB;
+    --ink-faint:#727B77; --line:#252C2A; --accent:#3EB6A4; --fix:#5FB98C; --chip:#1B2422;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1413; --surface:#161C1A; --ink:#E9EDEB; --ink-soft:#A7AFAB;
+  --ink-faint:#727B77; --line:#252C2A; --accent:#3EB6A4; --fix:#5FB98C; --chip:#1B2422;
+}
+
+/* Base styles */
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--font);font-size:var(--body);line-height:1.6;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--pad)}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+code{font-family:var(--mono);font-size:.86em}
+h1,h2,h3{text-wrap:balance}
+
+/* Small section labels */
+.eyebrow{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.13em;
+  text-transform:lowercase;color:var(--accent)}
+.eyebrow::first-letter{text-transform:uppercase}
+
+/* Top navigation */
+.topbar{border-bottom:1px solid var(--line)}
+.topbar .wrap{display:flex;align-items:center;justify-content:space-between;
+  height:56px;font-family:var(--mono);font-size:13px}
+.topbar .who{color:var(--ink);font-weight:500;letter-spacing:.02em}
+.topbar .links a{color:var(--ink-soft);margin-left:18px}
+.topbar .links a:hover{color:var(--accent);text-decoration:none}
+
+/* Hero section */
+.hero{padding:76px 0 44px}
+.hero h1{font-size:var(--h1);font-weight:700;line-height:1.05;letter-spacing:-.02em;margin:.55rem 0 0}
+.hero .lede{font-size:1.15rem;color:var(--ink-soft);max-width:60ch;margin:1.3rem 0 0}
+.hero .thesis{border-left:3px solid var(--accent);padding-left:18px;margin:1.9rem 0 0;
+  font-size:1.12rem;line-height:1.5;max-width:58ch;color:var(--ink)}
+.hero-meta{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;margin-top:2rem}
+.btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14px;
+  color:var(--surface);background:var(--ink);padding:10px 16px;border-radius:7px}
+.btn:hover{background:var(--accent);color:#fff;text-decoration:none}
+.btn.ghost{color:var(--ink);background:transparent;border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--accent);color:var(--accent);background:transparent}
+.stackline{font-family:var(--mono);font-size:12.5px;color:var(--ink-faint);flex-basis:100%;margin-top:4px}
+
+/* Section spacing */
+section{padding:38px 0}
+.rule{height:1px;background:var(--line);border:0;margin:0}
+.section-head{margin:0 0 22px}
+.section-head h2{font-size:var(--h2);font-weight:700;letter-spacing:-.01em;margin:.35rem 0 0}
+.section-head p{color:var(--ink-soft);margin:.6rem 0 0;max-width:64ch}
+
+/* Architecture diagram */
+.diagram-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+svg.arch{display:block;min-width:640px;width:100%;height:auto}
+.arch .box{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+.arch .box-q{fill:var(--chip);stroke:var(--accent)}
+.arch .lyr{font-family:var(--mono);font-size:11px;letter-spacing:.1em;fill:var(--ink-faint)}
+.arch .node{font-family:var(--mono);font-size:11px;fill:var(--ink)}
+.arch .flow{stroke:var(--ink-faint);stroke-width:1.4;fill:none;marker-end:url(#ah)}
+.arch .flow-q{stroke:var(--accent);stroke-width:1.4;fill:none;stroke-dasharray:4 3;marker-end:url(#ahq)}
+.arch .ahead{fill:var(--ink-faint)} .arch .ahead-q{fill:var(--accent)}
+.diagram-cap{font-size:14px;color:var(--ink-faint);margin-top:14px;max-width:62ch}
+
+/* Defect and test cards */
+.card{border:1px solid var(--line);border-radius:12px;background:var(--surface);
+  padding:24px 24px 26px;margin:20px 0}
+.card-top{display:flex;align-items:baseline;gap:13px;flex-wrap:wrap}
+.tag-id{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--accent);letter-spacing:.04em}
+.card h3{font-size:var(--h3);font-weight:700;margin:0;flex:1 1 auto;min-width:190px;letter-spacing:-.01em}
+.pill{font-family:var(--mono);font-size:11px;letter-spacing:.03em;padding:4px 9px;border-radius:20px;
+  white-space:nowrap;background:var(--chip);color:var(--ink-soft)}
+.pill-fix{color:var(--fix)}
+.card .one-line{color:var(--ink-soft);margin:.65rem 0 1rem;max-width:66ch}
+
+/* code block */
+figure.snippet{margin:0}
+.code-file{font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;color:var(--code-comment);
+  background:var(--code-bg);border:1px solid var(--code-line);border-bottom:0;
+  border-radius:9px 9px 0 0;padding:8px 16px}
+pre.code{margin:0;background:var(--code-bg);border:1px solid var(--code-line);border-radius:0 0 9px 9px;
+  padding:15px 16px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.62;color:var(--code-text)}
+.tok-c{color:var(--code-comment);font-style:italic}
+.tok-k{color:var(--code-kw)}
+.tok-j{color:var(--code-jinja)}
+.tok-s{color:var(--code-str)}
+
+.why{display:flex;gap:11px;margin-top:15px;font-size:15px;color:var(--ink-soft);line-height:1.5}
+.why-tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--accent);flex:0 0 auto;padding-top:2px}
+
+/* Modeling decisions */
+.decision{display:flex;gap:18px;padding:20px 0;border-top:1px solid var(--line)}
+.dec-n{font-family:var(--mono);font-size:13px;color:var(--accent);flex:0 0 auto;padding-top:4px;width:26px}
+.dec-body h3{font-size:var(--h3);font-weight:700;margin:0 0 .5rem;letter-spacing:-.01em}
+.dec-body p{margin:.4rem 0 0;color:var(--ink-soft);max-width:64ch}
+.dec-rej{font-size:14px}
+.dec-rej .why-tag{margin-right:2px}
+
+/* Stack and footer */
+.stack-grid{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 20px}
+.chip{font-family:var(--mono);font-size:12.5px;color:var(--ink);background:var(--chip);
+  border:1px solid var(--line);border-radius:7px;padding:7px 12px}
+.roadmap li{margin:.35rem 0;color:var(--ink-soft)}
+.roadmap b{color:var(--ink)}
+footer{border-top:1px solid var(--line);margin-top:20px}
+footer .wrap{padding-top:34px;padding-bottom:60px;display:flex;flex-wrap:wrap;gap:8px 20px;
+  justify-content:space-between;font-family:var(--mono);font-size:12.5px;color:var(--ink-faint)}
+footer a{color:var(--ink-soft)}
+
+@media (max-width:520px){ body{font-size:16px} .hero{padding:52px 0 30px} }
+@media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto} }
