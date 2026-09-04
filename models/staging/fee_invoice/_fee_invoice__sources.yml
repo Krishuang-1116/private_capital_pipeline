@@ -1,0 +1,5 @@
+sources:
+  - name: fee_data
+    schema: raw
+    tables:
+      - name: fee_invoice_raw
