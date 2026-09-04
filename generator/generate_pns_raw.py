@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import csv
 import json
+from datetime import timedelta
 from pathlib import Path
 
 from shared_state import (
@@ -46,6 +47,7 @@ from shared_state import (
     GENUINE_CHANGE_DEALS,
     TERMINAL_MEASURE_GAPS,
     SCD_CLIENT_IDS,
+    DIM_SERVICE_ROWS,
 )
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -93,6 +95,11 @@ NONTERMINAL_FORMAL = ["Upcoming RFP", "Submitted RFP", "Under analysis", "Fee pr
 TERMINAL_STATUSES = ["Won", "Lost", "Rejected"]
 TERMINAL_WEIGHTS = [0.5, 0.35, 0.15]
 
+# status_change_date (v2 spec §1) must fall on or before the reporting window's
+# start (Aug 2025) at the earliest, and on or before the first terminal
+# snapshot at the latest.
+REPORTING_WINDOW_START = SNAPSHOTS[0].replace(day=1)
+
 # Post-cutover-era columns (present only on reporting_date >= CUTOVER_DATE rows)
 POST_CUTOVER_STRATEGY_COLS = [
     "real_estate_equity", "real_estate_debt", "infrastructure_equity", "infrastructure_debt",
@@ -105,7 +112,7 @@ FIELDNAMES = [
     "reporting_date", "location", "client_name", "fund_name",
     "client_type", "client_nature", "deal_type", "deal_qualification", "deal_status",
     "fund_structuration", "financial_sponsor", "fund_jurisdiction", "owner",
-    "expected_outcome_date", "main_reason_for_loss",
+    "expected_outcome_date", "main_reason_for_loss", "status_change_date",
     "private_equity", "private_debt",
     *PRE_CUTOVER_STRATEGY_COLS, *POST_CUTOVER_STRATEGY_COLS,
     "Depositary", "Custody", "Transfer_Agency", "Fund_Administration", "Corporate_Secretary",
@@ -420,15 +427,66 @@ def build_deal_rows(i: int) -> tuple[list[dict], dict]:
         if entry["missing"] in ("revenue", "both"):
             last["revenue"] = None
 
+    # status_change_date (v2 spec §1): computed last, off each row's final
+    # deal_status, so it's correct regardless of whether terminality came
+    # from the natural trajectory or the terminal_gap_map override above.
+    # Populated only on rows where that row's own deal_status is terminal —
+    # same per-row conditional pattern as main_reason_for_loss, not a
+    # deal-level flag. The date itself is a single draw per deal (not
+    # redrawn per row), anchored to on/before the first terminal snapshot.
+    first_terminal_idx = next(
+        (idx for idx, r in enumerate(rows) if r["deal_status"] in TERMINAL_STATUSES), None
+    )
+    if first_terminal_idx is not None:
+        first_terminal_snapshot = rows[first_terminal_idx]["reporting_date"]
+        lookback_days = int(rng.integers(1, 46))
+        status_change_date = max(
+            REPORTING_WINDOW_START, first_terminal_snapshot - timedelta(days=lookback_days)
+        )
+        for r in rows:
+            r["status_change_date"] = status_change_date if r["deal_status"] in TERMINAL_STATUSES else None
+    else:
+        for r in rows:
+            r["status_change_date"] = None
+
     meta = {
         "deal_index": i,
         # Ambiguous by design for collision deals — genuinely no single
-        # authoritative client_id, which is the point of the defect.
+        # authoritative client_id, which is the point of the defect. This
+        # models pns_raw's own text-matching failure, not a fact about the
+        # underlying client — see true_client_id below for the ground truth
+        # a non-pns_raw source (e.g. the billing system) would actually have.
         "client_id": None if i in collision_map else (client["client_id"] if client else None),
+        # Unmasked ground truth, for cross-source consumers that don't share
+        # pns_raw's alias-matching defect. Populated for collision deals
+        # (the generator does know the true underlying client — see
+        # entry["primary_client_id"] above — it's only ambiguous from
+        # pns_raw's own text). Still None for unmatched deals: those use a
+        # fictitious client_name with no backing client record at all, so
+        # there is genuinely no true_client_id to recover, for any source.
+        "true_client_id": client["client_id"] if client else None,
         "client_name": client_name,
         "entry_snapshot": snaps[0].isoformat(),
         "snapshots": [s.isoformat() for s in snaps],
         "defect_tags": defect_tags,
+        # Terminal-status fields for cross-source consumers (e.g. the
+        # fee_invoice generator identifying the Won population) — None on
+        # both if the deal never reaches a terminal status.
+        "terminal_status": rows[first_terminal_idx]["deal_status"] if first_terminal_idx is not None else None,
+        "status_change_date": status_change_date.isoformat() if first_terminal_idx is not None else None,
+        "first_terminal_snapshot": (
+            rows[first_terminal_idx]["reporting_date"].isoformat() if first_terminal_idx is not None else None
+        ),
+        # Service Yes/No values as of the first terminal snapshot, keyed by
+        # dim_service's service_id — snapshotted here (not re-looked-up by a
+        # downstream script) because pns_raw.csv has no deal_id column, and
+        # client_name alone isn't a safe lookup key (collides across
+        # unrelated deals, confirmed this session). This is what
+        # generate_fee_invoice_raw.py reads to decide service coverage.
+        "service_flags_at_terminal": (
+            {r["service_id"]: rows[first_terminal_idx][r["pns_column_name"]] for r in DIM_SERVICE_ROWS}
+            if first_terminal_idx is not None else None
+        ),
     }
     return rows, meta
 

@@ -1,0 +1,11 @@
+service_id,service_name,pns_column_name
+SVC-DEP,Depositary,Depositary
+SVC-CUS,Custody,Custody
+SVC-TA,Transfer Agency,Transfer_Agency
+SVC-FA,Fund Administration,Fund_Administration
+SVC-CS,Corporate Secretary,Corporate_Secretary
+SVC-DRP,Digital Reporting Platform,digital_reporting_platform
+SVC-MOIR,Middle Office - Investor Reporting,Middle_Office_Investor_Reporting
+SVC-MOPM,Middle Office - Portfolio Monitoring,Middle_Office_Portfolio_Monitoring
+SVC-MOLA,Middle Office - Loan Administration,Middle_Office_Loan_Administration
+SVC-MOCM,Middle Office - Collateral Management,Middle_Office_Collateral_Management

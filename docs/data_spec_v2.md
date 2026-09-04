@@ -67,8 +67,11 @@ least one deal with `deal_status = 'Won'` in pns_raw. This constraint is enforce
 by the generator reading `pns_raw_manifest.json` to identify the Won deal
 population before generating invoices.
 
-Known Won deal population from v1 data: 35 Won deals across 20 unique clients.
-These 20 clients are the invoice-generating population.
+The Won-deal population (and its client set) is computed at generation time from
+`pns_raw_manifest.json`'s ground-truth `client_id` per deal — not hardcoded here,
+since the exact count depends on the specific data generation run (it shifts
+whenever an upstream generator change alters the shared RNG stream, e.g. the
+`status_change_date` addition in this same build).
 
 ### 2.2 Grain
 
@@ -88,7 +91,7 @@ treated as the grain key. `invoice_id` is the only safe unique identifier.
 |---|---|---|---|
 | `invoice_id` | text | 0% | Format: `INV-YYYYMM-NNNN` (e.g. `INV-202601-0001`). System-assigned, globally unique. Natural key — no surrogate needed. |
 | `client_id` | text | 0% | FK to `client_db_raw`. Always a Won-deal client. |
-| `service_id` | text | 0% | FK to `dim_service` seed. Format: `SVC-DEP`, `SVC-CUS`, `SVC-TA`, `SVC-FA`, `SVC-MO`. ~3% of rows carry an unrecognized code (Defect D). |
+| `service_id` | text | 0% | FK to `dim_service` seed. Format: `SVC-DEP`, `SVC-CUS`, `SVC-TA`, `SVC-FA`, `SVC-CS`, `SVC-DRP`, `SVC-MOIR`, `SVC-MOPM`, `SVC-MOLA`, `SVC-MOCM`. ~3% of rows carry an unrecognized code (Defect D). |
 | `invoice_date` | date | 0% | Date the invoice was issued. Not the billing period start. |
 | `source_extract_timestamp` | timestamp | 0% | When this row entered the extract. ~5% of rows have a timestamp > 45 days after `invoice_date` — late-arriving rows (Defect C). |
 
@@ -137,8 +140,15 @@ in the generator.
 - Not every client is billed for every service every month — vary coverage
   realistically. A client with Depositary = Yes in pns_raw should have SVC-DEP
   invoices; a client with Transfer_Agency = No should not have SVC-TA invoices.
-  The generator uses the Won deal's service columns from pns_raw to determine
-  which service_ids to generate invoices for.
+  The generator uses the Won deal's service columns **at its first terminal
+  (Won) snapshot** from pns_raw to determine which service_ids to generate
+  invoices for — not the deal's latest snapshot. A deal does not drop out of
+  pns_raw tracking after going terminal (every remaining monthly snapshot
+  simply repeats the terminal status), so "latest snapshot" would resolve to
+  Aug 2026 for most early-cohort deals regardless of when they actually won.
+  The first-Won snapshot is the single unambiguous point representing the
+  state of the engagement at conversion, and it's the same snapshot
+  `status_change_date`'s upper-bound constraint already anchors to.
 - Defect C injection: select ~5% of rows after generation and shift their
   `source_extract_timestamp` forward by 46–90 days while leaving `invoice_date`
   unchanged.
@@ -206,15 +216,39 @@ service column names. Both fact tables join through dim_service — pns_raw thro
 `pns_column_name` after unpivoting its Yes/No service columns; fee_invoice through
 `service_id` directly.
 
+> [!note] Correction (Sep 2026): original SVC-MO mapping didn't match the actual schema
+> The first draft of this section mapped a single `SVC-MO` service_id to a
+> `pns_column_name` of `Middle_Office` — but pns_raw has no such column. Middle
+> office coverage is actually four separate columns
+> (`Middle_Office_Investor_Reporting`, `Middle_Office_Portfolio_Monitoring`,
+> `Middle_Office_Loan_Administration`, `Middle_Office_Collateral_Management`).
+> Fixed by giving each real column its own `service_id`, consistent with every
+> other row in this table (one conformed service_id per real, nameable pns_raw
+> column). While reconciling this, two more real pns_raw service columns —
+> `Corporate_Secretary` and `digital_reporting_platform` — were found missing
+> from the original 5-row table entirely; both are added below, since both are
+> plain Yes/No/TBD flags for a specific, invoiceable service, same shape as
+> `Depositary`/`Custody`.
+>
+> `Other_MO_services` and `SFDR_eligibility` are deliberately excluded.
+> `SFDR_eligibility` isn't a billable service. `Other_MO_services` is a
+> catch-all flag ("client uses some unspecified additional middle-office
+> service") with no record of *which* service — there is nothing nameable on
+> the billing side for it to conform to. Forcing a `SVC-OTHER-MO` row into this
+> table would invent a fake conformed category matching nothing real. This is
+> the mirror image of Defect D (`SVC-OTC`): both are deliberately
+> unattributable to any known category on the *other* side of the conformed
+> dimension.
+
 ### Structure
 
 | Column | Type | Notes |
 |---|---|---|
-| `service_id` | text | PK. Format: `SVC-DEP`, `SVC-CUS`, `SVC-TA`, `SVC-FA`, `SVC-MO`. |
-| `service_name` | text | Human-readable label: Depositary, Custody, Transfer Agency, Fund Administration, Middle Office. |
-| `pns_column_name` | text | Exact column name as it appears in pns_raw: `Depositary`, `Custody`, `Transfer_Agency`, `Fund_Administration`, `Middle_Office`. |
+| `service_id` | text | PK. Format: `SVC-DEP`, `SVC-CUS`, `SVC-TA`, `SVC-FA`, `SVC-CS`, `SVC-DRP`, `SVC-MOIR`, `SVC-MOPM`, `SVC-MOLA`, `SVC-MOCM`. |
+| `service_name` | text | Human-readable label: Depositary, Custody, Transfer Agency, Fund Administration, Corporate Secretary, Digital Reporting Platform, Middle Office – Investor Reporting, Middle Office – Portfolio Monitoring, Middle Office – Loan Administration, Middle Office – Collateral Management. |
+| `pns_column_name` | text | Exact column name as it appears in pns_raw. |
 
-### Rows (all 5)
+### Rows (all 10)
 
 | service_id | service_name | pns_column_name |
 |---|---|---|
@@ -222,7 +256,12 @@ service column names. Both fact tables join through dim_service — pns_raw thro
 | SVC-CUS | Custody | Custody |
 | SVC-TA | Transfer Agency | Transfer_Agency |
 | SVC-FA | Fund Administration | Fund_Administration |
-| SVC-MO | Middle Office | Middle_Office |
+| SVC-CS | Corporate Secretary | Corporate_Secretary |
+| SVC-DRP | Digital Reporting Platform | digital_reporting_platform |
+| SVC-MOIR | Middle Office – Investor Reporting | Middle_Office_Investor_Reporting |
+| SVC-MOPM | Middle Office – Portfolio Monitoring | Middle_Office_Portfolio_Monitoring |
+| SVC-MOLA | Middle Office – Loan Administration | Middle_Office_Loan_Administration |
+| SVC-MOCM | Middle Office – Collateral Management | Middle_Office_Collateral_Management |
 
 ### Commit Status
 

@@ -4,6 +4,11 @@ dbt_packages/
 logs/
 dbt_internal_packages/
 *.duckdb
+data/raw/
+
+## any folder related to pycache
+**/__pycache__/
+*.pyc
 
 # generated raw source data — reproducible via generator/, not committed
 data/raw/
@@ -14,10 +19,11 @@ CLAUDE.md
 .DS_Store
 .vscode/
 
-# local-only learning notes — not meant to be published; pc_pipeline_synthetic_data_spec.md stays tracked
+# local-only learning notes — not meant to be committed
 docs/staging_models.md
 docs/intermediate_models.md
 docs/quality_models.md
 docs/marts_models.md
 docs/environment_and_tooling.md
 docs/PORTFOLIO_README.md
+
