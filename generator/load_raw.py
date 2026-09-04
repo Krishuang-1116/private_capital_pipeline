@@ -1,11 +1,12 @@
 """
-load_raw.py — loads the two raw source CSVs into duckdb as the `raw` schema.
+load_raw.py — loads the raw source CSVs into duckdb as the `raw` schema.
 
-Run after both generators produce the CSVs (validate_outputs.py optional but
-recommended first):
+Run after all three generators produce the CSVs (validate_outputs.py optional
+but recommended first):
 
     python generator/generate_pns_raw.py
     python generator/generate_client_db_raw.py
+    python generator/generate_fee_invoice_raw.py
     python generator/load_raw.py
 
 Design decision: every column loads as VARCHAR (`read_csv(..., all_varchar=true)`),
@@ -35,6 +36,7 @@ RAW_DIR = REPO_ROOT / "data" / "raw"
 SOURCES = {
     "pns_raw": RAW_DIR / "pns_raw.csv",
     "client_db_raw": RAW_DIR / "client_db_raw.csv",
+    "fee_invoice_raw": RAW_DIR / "fee_invoice_raw.csv",
 }
 
 
