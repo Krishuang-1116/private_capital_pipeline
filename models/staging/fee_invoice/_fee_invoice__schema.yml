@@ -1,0 +1,7 @@
+models:
+  - name: stg_fee_invoice
+    columns:
+      - name: invoice_id
+        data_tests:
+          - not_null
+          - unique
