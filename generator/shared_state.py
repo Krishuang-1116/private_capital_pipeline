@@ -315,3 +315,38 @@ TERMINAL_MEASURE_GAPS: list[dict] = [
     {"deal_status": "Lost",     "missing": "revenue"},
     {"deal_status": "Rejected", "missing": "both"},
 ]
+
+# ── dim_service (v2 spec §3) — conformed dimension linking fee_invoice_raw's
+# service_id to pns_raw's Yes/No service columns. Single source of truth for
+# both generate_fee_invoice_raw.py's service-eligibility lookup and the
+# seeds/dim_service.csv seed file, so the two can't independently drift out
+# of sync (the original single-Middle_Office-column spec draft did exactly
+# that — see data_spec_v2.md §3's correction note). No rng draws here, same
+# as every other hard-coded constant in this file.
+DIM_SERVICE_ROWS: list[dict] = [
+    {"service_id": "SVC-DEP",  "service_name": "Depositary",
+     "pns_column_name": "Depositary"},
+    {"service_id": "SVC-CUS",  "service_name": "Custody",
+     "pns_column_name": "Custody"},
+    {"service_id": "SVC-TA",   "service_name": "Transfer Agency",
+     "pns_column_name": "Transfer_Agency"},
+    {"service_id": "SVC-FA",   "service_name": "Fund Administration",
+     "pns_column_name": "Fund_Administration"},
+    {"service_id": "SVC-CS",   "service_name": "Corporate Secretary",
+     "pns_column_name": "Corporate_Secretary"},
+    {"service_id": "SVC-DRP",  "service_name": "Digital Reporting Platform",
+     "pns_column_name": "digital_reporting_platform"},
+    {"service_id": "SVC-MOIR", "service_name": "Middle Office - Investor Reporting",
+     "pns_column_name": "Middle_Office_Investor_Reporting"},
+    {"service_id": "SVC-MOPM", "service_name": "Middle Office - Portfolio Monitoring",
+     "pns_column_name": "Middle_Office_Portfolio_Monitoring"},
+    {"service_id": "SVC-MOLA", "service_name": "Middle Office - Loan Administration",
+     "pns_column_name": "Middle_Office_Loan_Administration"},
+    {"service_id": "SVC-MOCM", "service_name": "Middle Office - Collateral Management",
+     "pns_column_name": "Middle_Office_Collateral_Management"},
+]
+
+# Defect D (§2.4): service_id present on ~3% of fee_invoice_raw rows with no
+# match in dim_service — deliberately unattributable, same reasoning as
+# Other_MO_services' exclusion from dim_service (data_spec_v2.md §3 note).
+UNRECOGNIZED_SERVICE_ID: str = "SVC-OTC"
