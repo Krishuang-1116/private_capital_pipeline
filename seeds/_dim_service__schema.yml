@@ -1,0 +1,7 @@
+seeds:
+  - name: dim_service
+    columns:
+      - name: service_id
+        data_tests:
+          - unique
+          - not_null
