@@ -31,3 +31,9 @@ models:
             combination_of_columns:
               - client_id
               - billing_period_start
+  - name: dim_group
+    columns:
+      - name: group_id
+        data_tests:
+          - unique
+          - not_null
