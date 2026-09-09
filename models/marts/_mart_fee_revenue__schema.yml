@@ -1,0 +1,71 @@
+models:
+  - name: mart_fee_revenue
+    columns:
+      - name: invoice_id
+        data_tests:
+          - unique
+          - not_null
+
+semantic_models:
+  - name: sem_fee_revenue
+    model: ref('mart_fee_revenue')
+    defaults:
+      agg_time_dimension: billing_period_start
+    entities:
+      - name: client_id
+        type: primary
+    dimensions:
+      - name: billing_period_start
+        type: time
+        type_params:
+          time_granularity: month
+      - name: service_id
+        type: categorical
+      - name: billing_period_label
+        type: categorical
+      - name: fee_basis
+        type: categorical
+      - name: fee_line_type
+        type: categorical
+      - name: is_paid
+        type: categorical
+    measures:
+      - name: gross_fee_amount
+        agg: sum
+        expr: fee_amount_eur
+        filter: "{{ Dimension('fee_line_type') }} = 'invoice'"
+      - name: net_fee_amount
+        agg: sum
+        expr: fee_amount_eur
+      - name: invoice_count
+        agg: count
+        expr: invoice_id
+      - name: credit_note_count
+        agg: count
+        expr: invoice_id
+        filter: "{{ Dimension('fee_line_type') }} = 'credit_note'"
+
+metrics:
+  - name: gross_mrr
+    type: simple
+    type_params:
+      measure: gross_fee_amount
+  - name: net_mrr
+    type: simple
+    type_params:
+      measure: net_fee_amount
+  - name: invoice_count
+    type: simple
+    type_params:
+      measure: invoice_count
+  - name: credit_note_count
+    type: simple
+    type_params:
+      measure: credit_note_count
+  - name: credit_note_ratio
+    type: ratio
+    type_params:
+      numerator:
+        measure: credit_note_count
+      denominator:
+        measure: invoice_count
