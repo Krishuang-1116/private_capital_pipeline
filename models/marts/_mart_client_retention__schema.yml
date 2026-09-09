@@ -1,0 +1,53 @@
+models:
+  - name: mart_client_retention
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - client_id
+              - billing_period_start
+semantic_models:
+  - name: sem_client_retention
+    model: ref('mart_client_retention')
+    defaults:
+      agg_time_dimension: billing_period_start
+    entities:
+      - name: client_id
+        type: primary
+    dimensions:
+      - name: billing_period_start
+        type: time
+        type_params:
+          time_granularity: month
+      - name: billing_period_label
+        type: categorical
+      - name: is_retained
+        type: categorical
+    measures:
+      - name: active_clients
+        agg: count_distinct
+        expr: client_id
+      - name: churned_clients
+        agg: count_distinct
+        expr: client_id
+        filter: "{{ Dimension('is_retained') }} = false"
+      - name: retained_clients
+        agg: count_distinct
+        expr: client_id
+        filter: "{{ Dimension('is_retained') }} = true"
+
+metrics:
+  - name: client_retention_rate
+    type: ratio
+    type_params:
+      numerator:
+        measure: retained_clients
+      denominator:
+        measure: active_clients
+  - name: client_churn_rate
+    type: ratio
+    type_params:
+      numerator:
+        measure: churned_clients
+      denominator:
+        measure: active_clients
