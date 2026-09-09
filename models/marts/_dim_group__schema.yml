@@ -1,0 +1,7 @@
+models:
+  - name: dim_group
+    columns:
+      - name: group_id
+        data_tests:
+          - unique
+          - not_null

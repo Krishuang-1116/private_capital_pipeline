@@ -1,0 +1,7 @@
+models:
+  - name: dim_client
+    columns:
+      - name: client_key
+        data_tests:
+          - not_null
+          - unique

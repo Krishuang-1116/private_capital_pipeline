@@ -1,0 +1,30 @@
+semantic_models:
+  - name: sem_cohort_revenue
+    model: ref('mart_cohort_revenue')
+    entities:
+      - name: client_id
+        type: primary
+    dimensions:
+      - name: cohort_quarter
+        type: categorical
+      - name: periods_since_onboarding
+        type: categorical
+    measures:
+      - name: cohort_gross_revenue
+        agg: sum
+        expr: fee_amount_eur
+      - name: cohort_client_count
+        agg: count_distinct
+        expr: client_id
+      - name: cohort_baseline_rev
+        agg: average
+        expr: cohort_baseline_rev
+
+metrics:
+  - name: cohort_revenue_retention
+    type: ratio
+    type_params:
+      numerator:
+        measure: cohort_gross_revenue
+      denominator:
+        measure: cohort_baseline_rev

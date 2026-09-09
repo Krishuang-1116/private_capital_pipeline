@@ -1,0 +1,35 @@
+models:
+  - name: fact_deal_snapshot
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - deal_id
+              - reporting_date
+semantic_models:
+  - name: sem_deal_snapshot
+    model: ref('fact_deal_snapshot')
+    defaults:
+      agg_time_dimension: reporting_date
+    entities:
+      - name: client_id
+        type: primary
+    dimensions:
+      - name: reporting_date
+        type: time
+        type_params:
+          time_granularity: month
+    measures:
+      - name: aum_eur
+        agg: sum
+        expr: asset
+        non_additive_dimension: { name: reporting_date, window_choice: max }
+
+metrics:
+  - name: fee_yield
+    type: ratio
+    type_params:
+      numerator:
+        measure: gross_fee_amount
+      denominator:
+        measure: aum_eur

@@ -1,0 +1,7 @@
+models:
+  - name: dim_deal
+    columns:
+      - name: deal_id
+        data_tests:
+          - not_null
+          - unique
