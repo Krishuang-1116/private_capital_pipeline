@@ -54,14 +54,6 @@ metrics:
     type: simple
     type_params:
       measure: net_fee_amount
-  - name: invoice_count
-    type: simple
-    type_params:
-      measure: invoice_count
-  - name: credit_note_count
-    type: simple
-    type_params:
-      measure: credit_note_count
   - name: credit_note_ratio
     type: ratio
     type_params:
