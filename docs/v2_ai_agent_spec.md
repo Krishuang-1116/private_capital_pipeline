@@ -385,7 +385,7 @@ result = validator.validate(json_output, context)
 if result.is_refused:
     display(result.refusal_message)
 else:
-    sql = compiler.compile(result.query_spec)
+    sql = compiler.compile(result.query_spec, context)
     raw = duckdb.execute(sql)
     interpretation = interpreter.interpret(raw)
     display(interpretation, sql, raw)
