@@ -12,6 +12,7 @@ Governed metrics (the only valid values for metric_name):
 {governed_metrics_list}
 Per-metric governed dimensions list: 
 {governed_dimensions_list}
+Some dimensions take special forms: client_id is in the form of CXXX(X being numbers).
 
 Output format — return ONLY valid JSON, no preamble, no explanation:
 {{
@@ -19,7 +20,7 @@ Output format — return ONLY valid JSON, no preamble, no explanation:
   "group_by": "<dimension name as a string, or null if not specified>",
   "where": "<SQL-style filter condition as a string, or null if not specified>",
   "time_grain": "<month | quarter | year, inferred from the question,
-                  or month if not specified>"
+                  or null if not specified>"
 }}
 
 If the user's question cannot be mapped to any governed metric, set metric_name to
@@ -53,7 +54,7 @@ def translate(user_question: str, context: dict):
                         "metric_name": {"type": "string"},
                         "group_by": {"type": ["string", "null"]},
                         "where": {"type": ["string", "null"]},
-                        "time_grain": {"type": "string"}
+                        "time_grain": {"type": ["string", "null"]}
                     },
                     "required": ["metric_name", "group_by", "where", "time_grain"],
                     "additionalProperties": False
