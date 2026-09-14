@@ -46,8 +46,23 @@ def get_connection():
     return con
 
 
+@st.cache_data
+def get_dimension_value_hints(con):
+    dimensions = ['fee_basis', 'service_id', 'fee_line_type', 'is_paid']
+    dimension_value = {}
+    for dimension in dimensions:
+        values = con.execute(
+            f"SELECT DISTINCT {dimension} FROM mart_fee_revenue").fetchall()
+        # each row is a tuple of one-element
+        dimension_value[dimension] = [row[0] for row in values]
+
+    return dimension_value
+
+
 context = load_context()
 con = get_connection()
+dimension_value_hints = get_dimension_value_hints(con)
+
 
 st.title("Ask the Private Capital Metrics")
 st.caption(
@@ -65,7 +80,7 @@ if submitted and user_question:
 
     # 1. json_output = translator.translate(user_question, context)
     json_output = translator.translate(
-        user_question=user_question, context=context)
+        user_question=user_question, context=context, dimension_values=dimension_value_hints)
     #
     # 2. result = validator.validate(json_output, context)
     result = validator.validate(json_output=json_output, context=context)
