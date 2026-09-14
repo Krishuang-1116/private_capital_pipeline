@@ -12,7 +12,9 @@ Governed metrics (the only valid values for metric_name):
 {governed_metrics_list}
 Per-metric governed dimensions list: 
 {governed_dimensions_list}
-Some dimensions take special forms: client_id is in the form of CXXX(X being numbers).
+Some dimensions take special forms. client_id: CXXX(X being numbers). billing_period_label: YYYY-MM. cohort_quarter: YYYY-QN (Q being quarter, N being numbers from 1 to 4).
+Other dimensions have a list of predefined values:
+{dimension_values_list}
 
 Output format — return ONLY valid JSON, no preamble, no explanation:
 {{
@@ -31,14 +33,17 @@ UNGOVERNED and leave all other fields null. Do not approximate or suggest altern
 )
 
 
-def translate(user_question: str, context: dict):
+def translate(user_question: str, context: dict, dimension_values: dict):
     governed_metrics_list = ",".join(context.keys())
     governed_dimensions_list = "\n".join(
         f"metric: {k}, dimensions: {v.get('valid_dimensions')}" for k, v in context.items()
     )
+    dimension_values_list = "\n".join(
+        f"dimension: {k}, values: {v}"for k, v in dimension_values.items())
     formatted_prompt = TRANSLATOR_INSTRUCTION.format(
         governed_metrics_list=governed_metrics_list,
-        governed_dimensions_list=governed_dimensions_list)
+        governed_dimensions_list=governed_dimensions_list,
+        dimension_values_list=dimension_values_list)
     client = anthropic.Anthropic()
     response = client.messages.create(
         model="claude-haiku-4-5",
