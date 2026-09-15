@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Modeling Private Capital</title>
-  <meta name="description" content="A dbt project modeling a private-capital deal pipeline — every injected defect ships with its handler.">
-  <link rel="stylesheet" href="styles.css">
+  <meta name="description" content="A dbt project connecting private-capital deal snapshots, client history and fee invoices, with explicit defect handlers and a MetricFlow semantic layer.">
+  <link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
 
@@ -25,12 +25,12 @@
   <div class="wrap">
     <p class="eyebrow">Analytics Engineering · dbt · DuckDB → Snowflake</p>
     <h1>Modeling private capital, defect by defect.</h1>
-    <p class="lede">A dbt project that models a private-capital deal pipeline from two messy source systems — a monthly reporting extract and a CRM client master — and ships a handler for every defect it injects.</p>
+    <p class="lede">A dbt project that connects a private-capital deal pipeline to fee revenue across three source systems — a monthly reporting extract, a CRM client master and a billing extract — and ships a handler for every defect it injects.</p>
     <p class="thesis">Engineering surfaces ambiguity with full diagnostic context; resolution is a business decision. A defect the pipeline resolves is a skill demonstration — a defect it can't is surfaced, not silently patched.</p>
     <div class="hero-meta">
       <a class="btn" href="https://github.com/Krishuang-1116/private_capital_pipeline">↗ View the repo</a>
       <a class="btn ghost" href="https://www.linkedin.com/in/kris-he-huang">LinkedIn</a>
-      <span class="stackline">dbt-fusion · DuckDB (dev) · Snowflake (migrating) · MetricFlow · FastAPI · 17 models · 26 tests</span>
+      <span class="stackline">dbt-fusion · DuckDB (dev) · Snowflake (migrating) · MetricFlow · FastAPI · v1 foundation + September 2026 v2 scope</span>
     </div>
   </div>
 </header>
@@ -55,8 +55,8 @@
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow">Architecture</p>
-      <h2>Two sources in, a conformed model out — and a parallel QA lane.</h2>
-      <p>The spine runs raw → staging → intermediate → marts. Quality models tap the staging and intermediate layers directly to surface ambiguity — they never read from <code>dim_deal</code>, so the business-facing marts stay insulated from sentinel coercion.</p>
+      <h2>Three sources, connected facts — and a parallel QA lane.</h2>
+      <p>The spine runs raw → staging → intermediate → marts. V1 establishes the deal pipeline below; v2 adds a billing branch, shared dimensions and a semantic layer. Identity QA reads before sentinel coercion; invoice QA preserves the evidence before filtering.</p>
     </div>
     <div class="diagram-scroll">
       <svg class="arch" viewBox="0 0 690 310" role="img" aria-label="Pipeline from two raw sources through staging, intermediate and marts, with a parallel quality lane that surfaces defects.">
@@ -106,7 +106,7 @@
         <rect class="box-q" x="46" y="264" width="200" height="26" rx="6"/>
         <text class="node" x="56" y="281">qa_strategy_service_changes</text>
         <rect class="box-q" x="256" y="264" width="200" height="26" rx="6"/>
-        <text class="node" x="266" y="281">qa_unsolvable_strategy</text>
+        <text class="node" x="266" y="281">qa_unresolvable_strategy</text>
         <rect class="box-q" x="466" y="264" width="200" height="26" rx="6"/>
         <text class="node" x="476" y="281">qa_strategy_ambiguous</text>
 
@@ -122,7 +122,60 @@
         <path class="flow-q" d="M430,132 L430,224"/>
       </svg>
     </div>
-    <p class="diagram-cap">Seventeen models, twenty-six tests. The dashed teal lane is the design signature: defects are surfaced with diagnostic context, never quietly absorbed into the marts.</p>
+    <p class="diagram-cap">The v1 foundation. The dashed teal lane surfaces defects with diagnostic context; the billing branch below extends the same pattern.</p>
+
+    <!-- Billing extends the existing architecture. -->
+    <p class="eyebrow">V2 · billing and shared dimensions</p>
+    <div class="diagram-scroll" tabindex="0" role="region" aria-label="Billing architecture; scroll horizontally on smaller screens">
+      <svg class="arch" viewBox="0 0 690 412" role="img" aria-label="Fee invoices pass through pre-dedup staging, invoice deduplication and service matching into revenue, retention and cohort marts. A service seed joins the billing branch, client history feeds dim_group, and two invoice QA models retain diagnostics.">
+        <text class="lyr" x="16" y="20">Raw / seeds</text>
+        <text class="lyr" x="176" y="20">Staging</text>
+        <text class="lyr" x="346" y="20">Intermediate</text>
+        <text class="lyr" x="510" y="20">Marts</text>
+
+        <rect class="box" x="16" y="44" width="134" height="30" rx="6"/>
+        <text class="node" x="26" y="63">fee_invoice_raw</text>
+        <rect class="box" x="176" y="44" width="146" height="30" rx="6"/>
+        <text class="node" x="186" y="63">stg_fee_prededup</text>
+        <rect class="box" x="176" y="98" width="146" height="30" rx="6"/>
+        <text class="node" x="186" y="117">stg_fee_invoice</text>
+        <rect class="box" x="346" y="98" width="140" height="30" rx="6"/>
+        <text class="node" x="356" y="117">int_fee_invoice</text>
+        <rect class="box" x="510" y="44" width="176" height="30" rx="6"/>
+        <text class="node" x="520" y="63">mart_fee_revenue</text>
+        <rect class="box" x="510" y="98" width="176" height="30" rx="6"/>
+        <text class="node" x="520" y="117">mart_client_retention</text>
+        <rect class="box" x="510" y="152" width="176" height="30" rx="6"/>
+        <text class="node" x="520" y="171">mart_cohort_revenue</text>
+        <rect class="box" x="346" y="166" width="140" height="30" rx="6"/>
+        <text class="node" x="356" y="185">dim_service</text>
+        <text class="lyr" x="346" y="216">10-service seed</text>
+
+        <path class="flow" d="M150,59 L172,59"/>
+        <path class="flow" d="M249,74 L249,94"/>
+        <path class="flow" d="M322,113 L342,113"/>
+        <path class="flow" d="M486,107 L498,107 L498,59 L506,59"/>
+        <path class="flow" d="M486,113 L506,113"/>
+        <path class="flow" d="M486,119 L498,119 L498,167 L506,167"/>
+        <path class="flow" d="M416,166 L416,132"/>
+
+        <text class="lyr" x="16" y="252">Shared client hierarchy</text>
+        <rect class="box" x="16" y="266" width="134" height="30" rx="6"/>
+        <text class="node" x="26" y="285">dim_client</text>
+        <rect class="box" x="176" y="266" width="146" height="30" rx="6"/>
+        <text class="node" x="186" y="285">dim_group</text>
+        <path class="flow" d="M150,281 L172,281"/>
+
+        <text class="lyr" x="16" y="340">Invoice quality</text>
+        <rect class="box-q" x="16" y="356" width="214" height="30" rx="6"/>
+        <text class="node" x="26" y="375">qa_duplicate_invoices</text>
+        <rect class="box-q" x="256" y="356" width="214" height="30" rx="6"/>
+        <text class="node" x="266" y="375">qa_unmatched_services</text>
+        <path class="flow-q" d="M176,59 L162,59 L162,222 L4,222 L4,322 L123,322 L123,352"/>
+        <path class="flow-q" d="M322,59 L334,59 L334,322 L363,322 L363,352"/>
+      </svg>
+    </div>
+    <p class="diagram-cap">V2 adds two invoice QA models to the original six. The repository splits invoice staging into <code>stg_fee_prededup</code> and <code>stg_fee_invoice</code>, preserving duplicate evidence before deduplication. <code>dim_service</code> is the conformed service seed; <code>dim_group</code> is derived from the existing client dimension.</p>
   </div>
 </section>
 
@@ -375,6 +428,246 @@ WHERE rnk = 1 AND deal_status IN ('Won','Rejected','Lost')
 
 <hr class="rule">
 
+<!-- Billing pipeline -->
+<section id="billing">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">V2 · from pipeline to revenue</p>
+      <h2>A Won deal is the beginning of the billing story.</h2>
+      <p>The <a href="docs/data_spec_v2.md">September v2 spec</a> extends the <a href="docs/pc_pipeline_synthetic_data_spec.md">v1 foundation</a> with invoice-line data. Only clients with Won deals generate invoices; the generator derives that population from <code>pns_raw_manifest.json</code> and uses service selections at the first Won snapshot.</p>
+    </div>
+
+    <article class="card">
+      <div class="card-top">
+        <span class="tag-id">V2</span>
+        <h3>The date a deal becomes terminal</h3>
+        <span class="pill">pns_raw addition</span>
+      </div>
+      <p class="one-line"><code>status_change_date</code> records when a deal becomes Won, Lost or Rejected. It is null for non-terminal deals and cannot fall after the first snapshot carrying the terminal status.</p>
+      <figure class="snippet">
+        <figcaption class="code-file">V2 spec · stg_pns conditional validation</figcaption>
+        <pre class="code">-- terminal deals must have a status change date
+SELECT deal_id, reporting_date, deal_status, status_change_date
+FROM {{ ref('stg_pns') }}
+WHERE deal_status IN ('Won', 'Lost', 'Rejected')
+  AND status_change_date IS NULL</pre>
+      </figure>
+      <div class="why"><span class="why-tag">why it matters</span><span>The interval from a Won status change to the first invoice measures pipeline-to-revenue lag. Billing periods start in the month after the client's earliest Won date and run through August 2026.</span></div>
+    </article>
+
+    <article class="card">
+      <div class="card-top">
+        <span class="tag-id">A / E</span>
+        <h3>Stage invoices before deduplicating them</h3>
+        <span class="pill pill-fix">staging</span>
+      </div>
+      <p class="one-line">The grain is <code>invoice_id</code>: one client, one service and one billing period per invoice line. Multiple lines can share the same client, service and invoice date. Staging casts dates, timestamps, amounts and payment flags, then derives two fields.</p>
+      <figure class="snippet">
+        <figcaption class="code-file">models/staging/fee_invoice/stg_fee_prededup.sql · excerpt</figcaption>
+        <pre class="code">CASE WHEN fee_amount_eur &gt; 0 THEN 'invoice'
+     ELSE 'credit_note' END AS fee_line_type,
+STRFTIME(billing_period_start, '%Y-%m') AS billing_period_label</pre>
+      </figure>
+      <p class="one-line">About 3% of raw rows are exact duplicates; about 8% are negative credit notes. <code>stg_fee_prededup</code> retains the evidence for QA, then <code>stg_fee_invoice</code> selects one row per invoice.</p>
+      <figure class="snippet">
+        <figcaption class="code-file">models/staging/fee_invoice/stg_fee_invoice.sql</figcaption>
+        <pre class="code">WITH ranked AS (
+    SELECT *, ROW_NUMBER() OVER (
+        PARTITION BY invoice_id
+        ORDER BY source_extract_timestamp DESC
+    ) AS rnk
+    FROM {{ ref('stg_fee_prededup') }}
+)
+SELECT * EXCLUDE (rnk) FROM ranked WHERE rnk = 1</pre>
+      </figure>
+      <div class="why"><span class="why-tag">why it matters</span><span><code>fee_line_type</code> separates gross invoices from net revenue after credits. <code>billing_period_label</code> comes from the period being billed, not the invoice issue date. <code>fee_basis</code> is a category (AUM, commitment, flat or NAV); it is never summed.</span></div>
+    </article>
+
+    <article class="card">
+      <div class="card-top">
+        <span class="tag-id">C</span>
+        <h3>Late arrivals follow the extract timestamp</h3>
+        <span class="pill">incremental model</span>
+      </div>
+      <p class="one-line">About 5% of invoice rows arrive more than 45 days after their invoice date. The incremental filter uses <code>source_extract_timestamp</code>; merging on <code>invoice_id</code> keeps the invoice identity stable across runs.</p>
+      <figure class="snippet">
+        <figcaption class="code-file">models/marts/mart_fee_revenue.sql · current implementation</figcaption>
+        <pre class="code">{{ config(materialized='incremental', incremental_strategy='merge', unique_key='invoice_id') }}
+SELECT *
+FROM {{ ref('int_fee_invoice') }}
+{% if is_incremental() %}
+WHERE source_extract_timestamp &gt; (
+    SELECT MAX(source_extract_timestamp) FROM {{ this }}
+)
+{% endif %}</pre>
+      </figure>
+      <div class="why"><span class="why-tag">why it matters</span><span>An invoice-date cutoff would miss old invoices newly present in the extract. The current mart stores invoice rows; the v2 spec defines the monthly revenue view by client, service and billing period. The MetricFlow definitions below describe that analytical contract.</span></div>
+    </article>
+
+    <article class="card">
+      <div class="card-top">
+        <span class="tag-id">Q7</span>
+        <h3>Duplicate invoice evidence</h3>
+        <span class="pill pill-fix">dedup + QA</span>
+      </div>
+      <p class="one-line"><code>qa_duplicate_invoices</code> lists repeated invoice IDs and their occurrence counts before staging removes the duplicates.</p>
+      <figure class="snippet">
+        <figcaption class="code-file">models/quality/qa_duplicate_invoices.sql</figcaption>
+        <pre class="code">SELECT invoice_id, COUNT(*) AS occurrence_count
+FROM {{ ref('stg_fee_prededup') }}
+GROUP BY invoice_id
+HAVING COUNT(*) &gt; 1</pre>
+      </figure>
+      <div class="why"><span class="why-tag">why it matters</span><span>The revenue model receives unique invoices while the QA lane keeps the extract re-run visible. Querying the deduplicated model would erase the evidence this check needs.</span></div>
+    </article>
+
+    <article class="card">
+      <div class="card-top">
+        <span class="tag-id">Q8 / D</span>
+        <h3>Unrecognized service codes</h3>
+        <span class="pill pill-surface">surfaced for review</span>
+      </div>
+      <p class="one-line">About 3% of rows carry an unknown code such as <code>SVC-OTC</code>. <code>qa_unmatched_services</code> surfaces those rows; <code>int_fee_invoice</code> joins recognized codes to <code>dim_service</code> and attaches <code>service_name</code> and <code>pns_column_name</code>.</p>
+      <figure class="snippet">
+        <figcaption class="code-file">models/quality/qa_unmatched_services.sql</figcaption>
+        <pre class="code">SELECT a.invoice_id, a.service_id
+FROM {{ ref('stg_fee_prededup') }} a
+LEFT JOIN {{ ref('dim_service') }} b
+    ON a.service_id = b.service_id
+WHERE b.service_id IS NULL</pre>
+      </figure>
+      <div class="why"><span class="why-tag">why it matters</span><span>Unknown services are excluded from mart aggregations. There is no service sentinel: the pipeline cannot safely attribute an unknown code to a billable category. The affected invoices remain visible in QA for reconciliation.</span></div>
+    </article>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- Shared dimensions and revenue marts -->
+<section id="revenue-models">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">V2 · dimensional modeling</p>
+      <h2>Shared dimensions connect deals, clients and fees.</h2>
+      <p>The second fact stream turns the deal model into a galaxy schema. Client identity and conformed service definitions make pipeline-to-revenue comparisons possible while preserving the grain of each source.</p>
+    </div>
+
+    <article class="card">
+      <div class="card-top">
+        <span class="tag-id">DIM</span>
+        <h3>Ten services, one conformed seed</h3>
+        <span class="pill">dim_service</span>
+      </div>
+      <p class="one-line"><code>dim_service</code> maps invoice <code>service_id</code> values to exact <code>pns_column_name</code> values. Deal service flags can be unpivoted onto that shared axis; invoices already carry the service code.</p>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Conformed service mappings">
+        <table class="spec-table">
+          <caption>seeds/dim_service.csv · all ten mappings</caption>
+          <thead><tr><th scope="col">Service ID</th><th scope="col">PNS column</th></tr></thead>
+          <tbody>
+            <tr><td><code>SVC-DEP</code></td><td><code>Depositary</code></td></tr>
+            <tr><td><code>SVC-CUS</code></td><td><code>Custody</code></td></tr>
+            <tr><td><code>SVC-TA</code></td><td><code>Transfer_Agency</code></td></tr>
+            <tr><td><code>SVC-FA</code></td><td><code>Fund_Administration</code></td></tr>
+            <tr><td><code>SVC-CS</code></td><td><code>Corporate_Secretary</code></td></tr>
+            <tr><td><code>SVC-DRP</code></td><td><code>digital_reporting_platform</code></td></tr>
+            <tr><td><code>SVC-MOIR</code></td><td><code>Middle_Office_Investor_Reporting</code></td></tr>
+            <tr><td><code>SVC-MOPM</code></td><td><code>Middle_Office_Portfolio_Monitoring</code></td></tr>
+            <tr><td><code>SVC-MOLA</code></td><td><code>Middle_Office_Loan_Administration</code></td></tr>
+            <tr><td><code>SVC-MOCM</code></td><td><code>Middle_Office_Collateral_Management</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="why"><span class="why-tag">why it matters</span><span>The four middle-office services remain separate. <code>Other_MO_services</code> has no named billing counterpart, and <code>SFDR_eligibility</code> is not billable; both are excluded. The seed is a managed data artifact.</span></div>
+    </article>
+
+    <article class="card">
+      <div class="card-top">
+        <span class="tag-id">DIM</span>
+        <h3>Group → client drill-down</h3>
+        <span class="pill">dim_group</span>
+      </div>
+      <p class="one-line">V1 already carries <code>group_id</code> and <code>group_name</code> in the CRM extract. V2 extracts a group dimension for revenue concentration and client drill-down, with no new raw source required.</p>
+      <figure class="snippet">
+        <figcaption class="code-file">models/marts/dim_group.sql</figcaption>
+        <pre class="code">SELECT group_id, group_name, COUNT(client_id) AS client_count
+FROM {{ ref('dim_client') }}
+-- exactly one row per client_id has is_current = true
+WHERE group_id IS NOT NULL AND is_current = true
+GROUP BY group_id, group_name</pre>
+      </figure>
+      <div class="why"><span class="why-tag">why it matters</span><span>Counting current client versions avoids counting an SCD history row as another client. Clients without group affiliation remain in the client dimension; null group IDs do not create a group row.</span></div>
+    </article>
+
+    <article class="card">
+      <div class="card-top">
+        <span class="tag-id">MART</span>
+        <h3>Revenue, retention and cohorts</h3>
+        <span class="pill">three analytical views</span>
+      </div>
+      <p class="one-line">All three marts read the recognized-service invoice stream from <code>int_fee_invoice</code>. The v2 spec defines a distinct question for each:</p>
+      <ul class="roadmap">
+        <li><b><code>mart_fee_revenue</code></b> — gross invoices and net fees after credit notes, analyzed by client, service and billing period; refreshed incrementally.</li>
+        <li><b><code>mart_client_retention</code></b> — clients active in period N, retained in N+1, or absent in N+1, at client-and-period grain.</li>
+        <li><b><code>mart_cohort_revenue</code></b> — revenue by onboarding quarter and periods since the first invoice, compared with the cohort's period-zero baseline.</li>
+      </ul>
+      <div class="why"><span class="why-tag">why it matters</span><span>Period revenue, client continuity and cohort performance answer different questions. Keeping separate models makes their grains and denominators explicit.</span></div>
+    </article>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- Semantic layer -->
+<section id="semantic-layer">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">V2 · MetricFlow contract</p>
+      <h2>Four semantic models, seven metric definitions.</h2>
+      <p>The v2 spec puts shared measures and metric definitions above the marts. Three semantic models describe billing; a minimal addition to the existing deal fact supplies AUM for <code>fee_yield</code>.</p>
+    </div>
+
+    <article class="card">
+      <div class="card-top">
+        <span class="tag-id">SEM</span>
+        <h3>One definition for each analytical measure</h3>
+      </div>
+      <ul class="roadmap">
+        <li><b><code>sem_fee_revenue</code></b> → <code>mart_fee_revenue</code>: gross and net fee amounts, invoice count and credit-note count. Service, billing period, fee basis and payment status provide the analysis dimensions.</li>
+        <li><b><code>sem_client_retention</code></b> → <code>mart_client_retention</code>: distinct active, retained and churned clients by billing period.</li>
+        <li><b><code>sem_cohort_revenue</code></b> → <code>mart_cohort_revenue</code>: cohort gross revenue and active cohort clients by onboarding quarter and period offset.</li>
+        <li><b><code>sem_deal_snapshot</code></b> → <code>fact_deal_snapshot</code>: <code>aum_eur</code>, restricted to a single reporting date for cross-model comparison.</li>
+      </ul>
+    </article>
+
+    <article class="card">
+      <div class="card-top">
+        <span class="tag-id">METRIC</span>
+        <h3>Revenue quality and client continuity</h3>
+        <span class="pill">v2 definitions</span>
+      </div>
+      <p class="one-line">These definitions follow the September v2 spec. Gross and net revenue stay distinct, and retention ratios use explicit billing periods and cohort baselines.</p>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="MetricFlow metric definitions">
+        <table class="spec-table">
+          <caption>Two simple metrics and five ratios</caption>
+          <thead><tr><th scope="col">Metric</th><th scope="col">Definition</th></tr></thead>
+          <tbody>
+            <tr><td><code>gross_mrr</code></td><td>Sum of gross fee amounts (invoice lines only).</td></tr>
+            <tr><td><code>net_mrr</code></td><td>Sum of all signed fees, including credit notes.</td></tr>
+            <tr><td><code>credit_note_ratio</code></td><td>Credit-note count ÷ invoice count (invoice lines only).</td></tr>
+            <tr><td><code>client_retention_rate</code></td><td>Retained clients ÷ active clients.</td></tr>
+            <tr><td><code>client_churn_rate</code></td><td>Churned clients ÷ active clients.</td></tr>
+            <tr><td><code>cohort_revenue_retention</code></td><td>Cohort gross revenue at period N ÷ gross revenue at period zero.</td></tr>
+            <tr><td><code>fee_yield</code></td><td>Gross MRR ÷ AUM for the selected reporting date.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="why"><span class="why-tag">why it matters</span><span><code>fee_yield</code> is the only cross-model metric. The spec routes it through shared <code>client_id</code> in MetricFlow rather than a pre-join of the marts. AUM is a stock measure: filter to one reporting date and use matching currency units; never sum it across months.</span></div>
+    </article>
+  </div>
+</section>
+
+<hr class="rule">
+
 <!-- Tests -->
 <section>
   <div class="wrap">
@@ -523,9 +816,11 @@ WHERE b.deal_id IS NULL</pre>
     <p style="color:var(--ink-soft);max-width:64ch;margin:0 0 14px">Developed on DuckDB for fast local iteration; the model is warehouse-portable and is being migrated to Snowflake as the production target.</p>
     <ul class="roadmap">
       <li><b>Snowflake migration</b> — porting the model off DuckDB to a production warehouse (in progress).</li>
-      <li><b>MetricFlow semantic layer</b> — single-sourced metric definitions, including a non-additive AUM metric.</li>
+      <li><b>September v2 scope</b> — status-change dates, invoice staging and QA, timestamp-based incremental loading, conformed services and group-level analysis.</li>
+      <li><b>MetricFlow semantic layer</b> — four semantic models and seven defined metrics for revenue, credit notes, retention, cohorts and fee yield. AUM is semi-additive and must be restricted to one reporting date.</li>
       <li><b>FastAPI metric endpoint</b> — a thin read API over the marts.</li>
-      <li><b>Documented deferrals</b> — a physical pre/post-cutover source split (UNION reconciliation) and moving strategy/service columns into the fact table for native change tracking.</li>
+      <li><b>Documented deferrals</b> — physical pre/post-cutover source splitting, native strategy/service change tracking, currency-aware metric guards, SCD Type 2 on top_priority, alias coverage metrics and dim_fund extraction remain outside this v2 scope.</li>
+      <li><b>Separate implementation work</b> — the AI agent, Airflow DAGs and GitHub Actions configuration are not covered by the v2 data spec.</li>
     </ul>
   </div>
 </section>
@@ -547,19 +842,13 @@ WHERE b.deal_id IS NULL</pre>
   var KW = /\b(WITH|SELECT|DISTINCT|REPLACE|EXCLUDE|LEFT JOIN|INNER JOIN|CROSS JOIN|JOIN|GROUP BY|ORDER BY|PARTITION BY|OVER|ROW_NUMBER|LAG|COALESCE|TRY_CAST|CAST|REGEXP_EXTRACT|string_agg|COUNT|SUM|MIN|MAX|UNION ALL|UNION|IS DISTINCT FROM|IS NOT NULL|IS NULL|AS|ON|AND|OR|NOT|IN|LIKE|LOWER|TRIM|CASE|WHEN|THEN|ELSE|END|FROM|WHERE|HAVING|DATE|DOUBLE|INTEGER|BOOLEAN|VARCHAR|true|false)\b/g;
   function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
   document.querySelectorAll("pre.code").forEach(function (pre) {
-    var out = pre.textContent.split("\n").map(function (line) {
-      var code = line, comment = "";
-      var ci = line.indexOf("--");
-      if (ci >= 0) { code = line.slice(0, ci); comment = line.slice(ci); }
-      var jinja = [];
-      code = esc(code).replace(/\{\{[^}]*\}\}/g, function (m) { jinja.push(m); return "" + (jinja.length - 1) + ""; });
-      code = code.replace(/'[^']*'/g, function (m) { return '<span class="tok-s">' + m + '</span>'; })
-                 .replace(KW, '<span class="tok-k">$1</span>');
-      code = code.replace(/(\d+)/g, function (_, i) { return '<span class="tok-j">' + jinja[i] + '</span>'; });
-      if (comment) code += '<span class="tok-c">' + esc(comment) + '</span>';
-      return code;
-    }).join("\n");
-    pre.innerHTML = out;
+    var parts = pre.textContent.split(/(--[^\n]*|\{\{[\s\S]*?\}\}|\{%[\s\S]*?%\}|'(?:''|[^'])*')/g);
+    pre.innerHTML = parts.map(function (part) {
+      if (part.startsWith('--')) return '<span class="tok-c">' + esc(part) + '</span>';
+      if (part.startsWith('{{') || part.startsWith('{%')) return '<span class="tok-j">' + esc(part) + '</span>';
+      if (part.startsWith("'")) return '<span class="tok-s">' + esc(part) + '</span>';
+      return esc(part).replace(KW, '<span class="tok-k">$1</span>');
+    }).join('');
   });
 })();
 </script>
