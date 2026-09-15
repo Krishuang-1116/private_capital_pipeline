@@ -47,11 +47,11 @@ def get_connection():
 
 
 @st.cache_data
-def get_dimension_value_hints(con):
+def get_dimension_value_hints(_con):
     dimensions = ['fee_basis', 'service_id', 'fee_line_type', 'is_paid']
     dimension_value = {}
     for dimension in dimensions:
-        values = con.execute(
+        values = _con.execute(
             f"SELECT DISTINCT {dimension} FROM mart_fee_revenue").fetchall()
         # each row is a tuple of one-element
         dimension_value[dimension] = [row[0] for row in values]

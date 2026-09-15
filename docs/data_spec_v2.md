@@ -385,6 +385,22 @@ definition should include a note on aggregation type.
 | `cohort_revenue_retention` | `ratio` | `sem_cohort_revenue` | cohort_gross_revenue at period N / cohort_gross_revenue at period 0 — private capital analogue of NRR |
 | `fee_yield` | `ratio` | `sem_fee_revenue` + `sem_deal_snapshot` | gross_mrr / aum_eur — cross-model metric; MetricFlow resolves join through shared client_id entity |
 
+Each metric also carries a `description:` field on its YAML entry — plain-language
+grounding text, distinct from the formula-style Definition column above. This exists
+specifically for `feature/v2-ai-agent`'s `translator.py` to inject into its system
+prompt so the LLM can resolve a natural-language paraphrase (e.g. "gross revenue")
+onto the correct governed metric name, not for human documentation:
+
+| Metric | `description:` (YAML) |
+|---|---|
+| `gross_mrr` | Monthly recurring gross fee revenue — invoices only, before credit note adjustments |
+| `net_mrr` | Monthly recurring net fee revenue — gross fees net of all credit note adjustments |
+| `credit_note_ratio` | Share of invoice lines reversed by credit notes, which is quality signal for billing accuracy |
+| `client_retention_rate` | share of active clients retained into the next billing period - forward-looking retention signal |
+| `client_churn_rate` | share of active clients who lapse before the next billing period - forward-looking churn signal |
+| `cohort_revenue_retention` | Revenue retained relative to cohort baseline, which is the private capital analogue of NRR |
+| `fee_yield` | gross fee revenue as a proportion of AUM — measures fee efficiency per unit of capital under management; cross-model metric requiring MetricFlow join through shared client_id entity (sem_fee_revenue + sem_deal_snapshot); excluded from v2 governed agent, targeted for v3 post-Snowflake migration |
+
 ### 5.3 Cross-Model Join Note
 
 `fee_yield` is the only metric requiring a cross-model join. MetricFlow handles

@@ -39,6 +39,7 @@ semantic_models:
 metrics:
   - name: client_retention_rate
     type: ratio
+    description: share of active clients retained into the next billing period - forward-looking retention signal
     type_params:
       numerator:
         measure: retained_clients
@@ -46,6 +47,7 @@ metrics:
         measure: active_clients
   - name: client_churn_rate
     type: ratio
+    description: share of active clients who lapse before the next billing period - forward-looking churn signal
     type_params:
       numerator:
         measure: churned_clients
