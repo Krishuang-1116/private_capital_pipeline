@@ -28,6 +28,10 @@ semantic_models:
 metrics:
   - name: fee_yield
     type: ratio
+    description:
+      gross fee revenue as a proportion of AUM — measures fee efficiency per unit of capital
+      under management; cross-model metric requiring MetricFlow join through shared client_id
+      entity (sem_fee_revenue + sem_deal_snapshot); excluded from v2 governed agent, targeted for v3 post-Snowflake migration
     type_params:
       numerator:
         measure: gross_fee_amount

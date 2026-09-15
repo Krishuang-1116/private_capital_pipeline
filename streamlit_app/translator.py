@@ -34,7 +34,8 @@ UNGOVERNED and leave all other fields null. Do not approximate or suggest altern
 
 
 def translate(user_question: str, context: dict, dimension_values: dict):
-    governed_metrics_list = ",".join(context.keys())
+    governed_metrics_list = "\n".join(
+        f"metric: {k}, description: {v.get('description')}" for k, v in context.items())
     governed_dimensions_list = "\n".join(
         f"metric: {k}, dimensions: {v.get('valid_dimensions')}" for k, v in context.items()
     )
@@ -50,6 +51,8 @@ def translate(user_question: str, context: dict, dimension_values: dict):
         max_tokens=300,
         system=formatted_prompt,
         messages=[{"role": "user", "content": user_question}],
+        # reduces output variance; not a first-class parameter
+        extra_body={"temperature": 0},
         output_config={
             "format": {
                 "type": "json_schema",

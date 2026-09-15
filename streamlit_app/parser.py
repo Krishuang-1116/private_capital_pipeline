@@ -125,6 +125,7 @@ def parse_metrics(marts_dir=MARTS_DIR):
         for metric in content["metrics"]:
             metric_name = metric["name"]
             metric_type = metric["type"]  # "simple" | "ratio"
+            metric_desc = metric["description"]
 
             if metric_type == "simple":
                 # pull metric["type_params"]["measure"]
@@ -133,6 +134,7 @@ def parse_metrics(marts_dir=MARTS_DIR):
                 metric_refs.append({
                     "metric_name": metric_name,
                     "metric_type": metric_type,
+                    "metric_desc": metric_desc,
                     "measure": metric_measure
                 })
 
@@ -147,6 +149,7 @@ def parse_metrics(marts_dir=MARTS_DIR):
                 metric_refs.append({
                     "metric_name": metric_name,
                     "metric_type": metric_type,
+                    "metric_desc": metric_desc,
                     "numerator_measure": numerator_measure,
                     "denominator_measure": denominator_measure
                 })
@@ -190,6 +193,7 @@ def build_metric_lookup(marts_dir=MARTS_DIR):
                     lookup[ref["metric_name"]] = {
                         "source_mart": sm_data["source_mart"],
                         "type": ref["metric_type"],
+                        "description": ref["metric_desc"],
                         "agg": sm_data["measures"][ref["measure"]]["agg"],
                         "column": sm_data["measures"][ref["measure"]]["expr"],
                         "filter": sm_data["measures"][ref["measure"]]["filter"],
@@ -225,6 +229,7 @@ def build_metric_lookup(marts_dir=MARTS_DIR):
                 lookup[ref["metric_name"]] = {
                     "source_mart": num_data["source_mart"],
                     "type": ref["metric_type"],
+                    "description": ref["metric_desc"],
                     "numerator": {
                         "agg": num_data["measures"][ref["numerator_measure"]]["agg"],
                         "column": num_data["measures"][ref["numerator_measure"]]["expr"],

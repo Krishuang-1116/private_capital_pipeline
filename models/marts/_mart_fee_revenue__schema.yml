@@ -48,14 +48,17 @@ semantic_models:
 metrics:
   - name: gross_mrr
     type: simple
+    description: Monthly recurring gross fee revenue — invoices only, before credit note adjustments
     type_params:
       measure: gross_fee_amount
   - name: net_mrr
     type: simple
+    description: Monthly recurring net fee revenue — gross fees net of all credit note adjustments
     type_params:
       measure: net_fee_amount
   - name: credit_note_ratio
     type: ratio
+    description: Share of invoice lines reversed by credit notes, which is quality signal for billing accuracy
     type_params:
       numerator:
         measure: credit_note_count

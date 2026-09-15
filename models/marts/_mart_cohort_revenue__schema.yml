@@ -23,6 +23,7 @@ semantic_models:
 metrics:
   - name: cohort_revenue_retention
     type: ratio
+    description: Revenue retained relative to cohort baseline, which is the private capital analogue of NRR
     type_params:
       numerator:
         measure: cohort_gross_revenue
