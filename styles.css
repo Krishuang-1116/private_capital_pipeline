@@ -101,7 +101,7 @@ svg.arch{display:block;min-width:640px;width:100%;height:auto}
 .arch .flow{stroke:var(--ink-faint);stroke-width:1.4;fill:none;marker-end:url(#ah)}
 .arch .flow-q{stroke:var(--accent);stroke-width:1.4;fill:none;stroke-dasharray:4 3;marker-end:url(#ahq)}
 .arch .ahead{fill:var(--ink-faint)} .arch .ahead-q{fill:var(--accent)}
-.diagram-cap{font-size:14px;color:var(--ink-faint);margin-top:14px;max-width:62ch}
+.diagram-cap{font-size:14px;color:var(--ink-faint);margin-top:14px}
 
 /* Defect and test cards */
 .card{border:1px solid var(--line);border-radius:12px;background:var(--surface);
