@@ -1,5 +1,23 @@
 models:
   - name: fact_deal_snapshot
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: deal_id
+        data_type: VARCHAR
+      - name: reporting_date
+        data_type: DATE
+      - name: asset
+        data_type: DOUBLE
+      - name: revenue
+        data_type: VARCHAR
+      - name: revenue_eur_equiv
+        data_type: DOUBLE
+      - name: client_key
+        data_type: INTEGER
+      - name: client_id
+        data_type: VARCHAR
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:

@@ -1,10 +1,40 @@
 models:
   - name: mart_fee_revenue
+    config:
+      contract:
+        enforced: true
     columns:
       - name: invoice_id
+        data_type: VARCHAR
         data_tests:
           - unique
           - not_null
+      - name: client_id
+        data_type: VARCHAR
+      - name: service_id
+        data_type: VARCHAR
+      - name: invoice_date
+        data_type: DATE
+      - name: source_extract_timestamp
+        data_type: TIMESTAMP
+      - name: billing_period_start
+        data_type: DATE
+      - name: billing_period_end
+        data_type: DATE
+      - name: fee_amount_eur
+        data_type: DOUBLE
+      - name: fee_basis
+        data_type: VARCHAR
+      - name: is_paid
+        data_type: BOOLEAN
+      - name: fee_line_type
+        data_type: VARCHAR
+      - name: billing_period_label
+        data_type: VARCHAR
+      - name: service_name
+        data_type: VARCHAR
+      - name: pns_column_name
+        data_type: VARCHAR
 
 semantic_models:
   - name: sem_fee_revenue

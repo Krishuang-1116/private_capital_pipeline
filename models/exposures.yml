@@ -1,0 +1,23 @@
+exposures:
+  - name: ask_the_private_capital_metrics_agent
+    label: Ask a natural-language question about the private capital metrics you are interested in.
+    type: application
+    maturity: low
+    url: streamlit_agent_url_once_deployed_this_is_a_placeholder
+
+    depends_on:
+      - ref('mart_fee_revenue')
+
+    owner:
+      name: Kris Huang
+
+  - name: metric_flow_semantic_layer
+    label: semantic layer
+    type: application
+    maturity: high
+
+    depends_on:
+      - ref('mart_fee_revenue')
+
+    owner:
+      name: Kris Huang
