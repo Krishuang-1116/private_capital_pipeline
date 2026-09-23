@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Modeling Private Capital</title>
   <meta name="description" content="A dbt project connecting private-capital deal snapshots, client history and fee invoices, with explicit defect handlers and a MetricFlow semantic layer.">
-  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 
@@ -176,6 +176,47 @@
       </svg>
     </div>
     <p class="diagram-cap">V2 adds two invoice QA models to the original six. The repository splits invoice staging into <code>stg_fee_prededup</code> and <code>stg_fee_invoice</code>, preserving duplicate evidence before deduplication. <code>dim_service</code> is the conformed service seed; <code>dim_group</code> is derived from the existing client dimension.</p>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- Orchestration -->
+<section id="orchestration">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">V2 · Orchestration</p>
+      <h2>Scheduled monthly, in dependency order.</h2>
+      <p>An Airflow 3 DAG, <code>pc_pipeline_monthly</code>, runs the dbt project on the first of each month in three task groups: staging, then everything downstream of it, then the full test suite. Each group waits for the one before it to succeed, so tests never run against a half-built project.</p>
+    </div>
+
+    <article class="card">
+      <div class="card-top">
+        <span class="tag-id">DAG</span>
+        <h3>Three task groups, one direction</h3>
+        <span class="pill">Airflow 3</span>
+      </div>
+      <p class="one-line">Written with Airflow 3's <code>@dag</code>, <code>@task_group</code> and <code>@task.bash</code> decorators. Airflow runs in its own conda environment and calls the dbt binary by absolute path, so the orchestrator and the transformer share an interface, not a dependency tree.</p>
+      <figure class="shot">
+        <a href="assets/airflow_graph.png"><img src="assets/airflow_graph.png" width="1240" height="270" loading="lazy" alt="Airflow graph view: task groups dbt_staging, dbt_marts and dbt_tests, each containing one @task.bash task, connected left to right and all marked success."></a>
+        <figcaption>Graph view. <code>dbt_staging</code> builds the 6 staging models, <code>dbt_marts</code> builds the 20 models downstream of them (6 + 20 = the full 26-model project), and <code>dbt_tests</code> runs every test.</figcaption>
+      </figure>
+      <div class="why"><span class="why-tag">why it matters</span><span>The original selectors, <code>stg_+</code> and <code>mart_+</code>, matched <b>zero models</b>: dbt matches the text before <code>+</code> against exact model names, not prefixes. The tasks would have run nothing and still gone green. Checking each selector with <code>dbt ls</code> before trusting it led to folder selection: <code>staging</code> and <code>staging+ --exclude staging</code>.</span></div>
+    </article>
+
+    <article class="card">
+      <div class="card-top">
+        <span class="tag-id">RUN</span>
+        <h3>A green run on the scheduler</h3>
+        <span class="pill pill-fix">success</span>
+      </div>
+      <p class="one-line">A triggered run completes in about nine seconds. All three tasks succeed on the first try, with no retries needed.</p>
+      <figure class="shot">
+        <a href="assets/airflow_run.png"><img src="assets/airflow_run.png" width="2102" height="1061" loading="lazy" alt="Airflow run details: a manual run with status Success and duration 9 seconds; task instances run_staging, run_marts and run_tests all Success on try 1."></a>
+        <figcaption>Run details for a triggered run. Tasks execute in order, about 2.5 seconds each.</figcaption>
+      </figure>
+      <div class="why"><span class="why-tag">why it matters</span><span>The first scheduled run failed at <code>run_marts</code>. It exposed a bug that manual builds had hidden: the incremental path of <code>mart_fee_revenue</code> was failing on every run, and it only ever looked healthy because manual builds used <code>--full-refresh</code>, which skips that path. The fix went into the dbt model, not the DAG: <code>on_schema_change='append_new_columns'</code>. The enforced model contract still rejects any missing, extra or retyped column.</span></div>
+    </article>
   </div>
 </section>
 
@@ -810,12 +851,14 @@ WHERE b.deal_id IS NULL</pre>
       <span class="chip">DuckDB · dev</span>
       <span class="chip">Snowflake · migrating</span>
       <span class="chip">MetricFlow</span>
+      <span class="chip">Airflow 3</span>
     </div>
     <p style="color:var(--ink-soft);max-width:64ch;margin:0 0 14px">Developed on DuckDB for fast local iteration; the model is warehouse-portable and is being migrated to Snowflake as the production target.</p>
     <ul class="roadmap">
       <li><b>Snowflake migration</b> — porting the model off DuckDB to a production warehouse (in progress).</li>
       <li><b>September v2 scope</b> — status-change dates, invoice staging and QA, timestamp-based incremental loading, conformed services and group-level analysis.</li>
       <li><b>MetricFlow semantic layer</b> — four semantic models and seven defined metrics for revenue, credit notes, retention, cohorts and fee yield. AUM is semi-additive and must be restricted to one reporting date.</li>
+      <li><b>Airflow orchestration</b> — a monthly DAG runs staging, downstream models and tests as three dependent task groups.</li>
     </ul>
   </div>
 </section>
