@@ -30,7 +30,7 @@
     <div class="hero-meta">
       <a class="btn" href="https://github.com/Krishuang-1116/private_capital_pipeline">↗ View the repo</a>
       <a class="btn ghost" href="https://www.linkedin.com/in/kris-he-huang">LinkedIn</a>
-      <span class="stackline">dbt-fusion · DuckDB (dev) · Snowflake (migrating) · MetricFlow</span>
+      <span class="stackline">dbt-fusion · DuckDB (dev) · Snowflake (migrating) · MetricFlow · Airflow</span>
     </div>
   </div>
 </header>
@@ -856,9 +856,7 @@ WHERE b.deal_id IS NULL</pre>
     <p style="color:var(--ink-soft);max-width:64ch;margin:0 0 14px">Developed on DuckDB for fast local iteration; the model is warehouse-portable and is being migrated to Snowflake as the production target.</p>
     <ul class="roadmap">
       <li><b>Snowflake migration</b> — porting the model off DuckDB to a production warehouse (in progress).</li>
-      <li><b>September v2 scope</b> — status-change dates, invoice staging and QA, timestamp-based incremental loading, conformed services and group-level analysis.</li>
-      <li><b>MetricFlow semantic layer</b> — four semantic models and seven defined metrics for revenue, credit notes, retention, cohorts and fee yield. AUM is semi-additive and must be restricted to one reporting date.</li>
-      <li><b>Airflow orchestration</b> — a monthly DAG runs staging, downstream models and tests as three dependent task groups.</li>
+      <li><b>Slim CI/CD</b> — GitHub Actions running <code>dbt build --select state:modified+</code> on every pull request, so only changed models and their downstream models are rebuilt and tested (planned).</li>
     </ul>
   </div>
 </section>
