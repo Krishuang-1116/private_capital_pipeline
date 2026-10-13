@@ -29,6 +29,7 @@
     <p class="thesis">Engineering surfaces ambiguity with full diagnostic context; resolution is a business decision. A defect the pipeline resolves is a skill demonstration — a defect it can't is surfaced, not silently patched.</p>
     <div class="hero-meta">
       <a class="btn" href="https://github.com/Krishuang-1116/private_capital_pipeline">↗ View the repo</a>
+      <a class="btn ghost" href="https://www.youtube.com/watch?v=I_g6UBMTgZI">▶ Watch the agent demo</a>
       <a class="btn ghost" href="https://www.linkedin.com/in/kris-he-huang">LinkedIn</a>
       <span class="stackline">dbt-fusion · DuckDB (dev) · Snowflake (migrating) · MetricFlow · Airflow</span>
     </div>
@@ -703,6 +704,37 @@ GROUP BY group_id, group_name</pre>
         </table>
       </div>
       <div class="why"><span class="why-tag">why it matters</span><span><code>fee_yield</code> is the only cross-model metric. The spec routes it through shared <code>client_id</code> in MetricFlow rather than a pre-join of the marts. AUM is a stock measure: filter to one reporting date and use matching currency units; never sum it across months.</span></div>
+    </article>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- Agent -->
+<section id="agent">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">V2 · Governed AI agent</p>
+      <h2>Ask the Private Capital Metrics.</h2>
+      <p>A Streamlit app that answers plain-English questions about fee revenue, retention and cohorts. It can only answer with the metrics defined in the semantic layer above, and it refuses anything outside them instead of guessing.</p>
+    </div>
+
+    <article class="card">
+      <div class="card-top">
+        <span class="tag-id">AGENT</span>
+        <h3>The LLM never writes SQL</h3>
+        <span class="pill">Claude · Streamlit</span>
+      </div>
+      <p class="one-line">Each question goes through five steps. Only two of them involve the language model.</p>
+      <ul class="roadmap">
+        <li><b>Translate</b>: the first LLM call turns the question into structured intent (metric, grouping, time grain, filter) and nothing else.</li>
+        <li><b>Validate</b>: Python checks the metric and grouping against a lookup built from the semantic-layer YAML. Anything ungoverned is refused with a list of what the agent can answer.</li>
+        <li><b>Compile</b>: Python builds the SQL deterministically from each metric's definition, including its aggregation and filter.</li>
+        <li><b>Execute</b>: the query runs against the warehouse.</li>
+        <li><b>Interpret</b>: the second LLM call explains the result, and the generated SQL and raw rows stay visible next to the answer.</li>
+      </ul>
+      <p style="margin:18px 0 4px"><a class="btn" href="https://www.youtube.com/watch?v=I_g6UBMTgZI">▶ Watch the demo</a></p>
+      <div class="why"><span class="why-tag">why it matters</span><span>The model's job is understanding the question, not calculating the number. Every figure comes from the same metric definitions the dbt project ships, so a reworded question can't produce a different definition of revenue. MetricFlow's own query engine has no local execution path on DuckDB, so the compile step is a small hand-built replacement for it.</span></div>
     </article>
   </div>
 </section>
